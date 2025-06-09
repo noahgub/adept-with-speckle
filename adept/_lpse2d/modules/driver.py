@@ -9,6 +9,8 @@ import numpy as np
 
 from adept.utils import download_from_s3
 
+from lasy.profiles.speckle_profile import SpeckleProfile
+
 
 def load(cfg: Dict, DriverModule: eqx.Module) -> eqx.Module:
     filename = cfg["drivers"]["E0"]["file"]
@@ -74,6 +76,21 @@ class UniformDriver(eqx.Module):
     phases: Array
     envelope: Dict
 
+    wavelength: jnp.ndarray
+    energy: jnp.ndarray
+    focal_length: jnp.ndarray
+    beam_aperture_x: jnp.ndarray
+    beam_aperture_y: jnp.ndarray
+    n_beamlets_x: jnp.ndarray
+    n_beamlets_y: jnp.ndarray
+    relative_laser_bandwidth: jnp.ndarray
+    ssd_phase_modulation_amplitude_x: jnp.ndarray
+    ssd_phase_modulation_amplitude_y: jnp.ndarray
+    ssd_number_color_cycles_x: jnp.ndarray
+    ssd_number_color_cycles_y: jnp.ndarray
+    ssd_transverse_bandwidth_distribution_x: jnp.ndarray
+    ssd_transverse_bandwidth_distribution_y: jnp.ndarray
+
     def __init__(self, cfg: Dict):
         super().__init__()
         driver_cfg = cfg["drivers"]["E0"]
@@ -84,6 +101,22 @@ class UniformDriver(eqx.Module):
         phase_rng = np.random.default_rng(seed=cfg["drivers"]["E0"]["params"]["phases"]["seed"])
         self.phases = jnp.array(phase_rng.uniform(-1, 1, driver_cfg["num_colors"]))
         self.envelope = driver_cfg["derived"]
+
+        # Lasy parameters
+        self.wavelength = jnp.array(driver_cfg["lasy_params"]["wavelength"]).item()            
+        self.energy = jnp.array(driver_cfg["lasy_params"]["energy"]).item()                               
+        self.focal_length = jnp.array(driver_cfg["lasy_params"]["focal_length"]).item()                         
+        self.beam_aperture_x = jnp.array(driver_cfg["lasy_params"]["beam_aperture_x"]).item()                     
+        self.beam_aperture_y = jnp.array(driver_cfg["lasy_params"]["beam_aperture_y"]).item()  
+        self.n_beamlets_x = jnp.array(driver_cfg["lasy_params"]["n_beamlets_x"]).item()  
+        self.n_beamlets_y = jnp.array(driver_cfg["lasy_params"]["n_beamlets_y"]).item()                              
+        self.relative_laser_bandwidth = jnp.array(driver_cfg["lasy_params"]["relative_laser_bandwidth"]).item()                    
+        self.ssd_phase_modulation_amplitude_x = jnp.array(driver_cfg["lasy_params"]["ssd_phase_modulation_amplitude_x"]).item()  
+        self.ssd_phase_modulation_amplitude_y = jnp.array(driver_cfg["lasy_params"]["ssd_phase_modulation_amplitude_y"]).item()  
+        self.ssd_number_color_cycles_x = jnp.array(driver_cfg["lasy_params"]["ssd_number_color_cycles_x"]).item()  
+        self.ssd_number_color_cycles_y = jnp.array(driver_cfg["lasy_params"]["ssd_number_color_cycles_y"]).item()  
+        self.ssd_transverse_bandwidth_distribution_x = jnp.array(driver_cfg["lasy_params"]["ssd_transverse_bandwidth_distribution_x"]).item()  
+        self.ssd_transverse_bandwidth_distribution_y = jnp.array(driver_cfg["lasy_params"]["ssd_transverse_bandwidth_distribution_y"]).item()  
 
     def save(self, filename: str) -> None:
         """
@@ -103,11 +136,28 @@ class UniformDriver(eqx.Module):
 
     def __call__(self, state: Dict, args: Dict) -> tuple:
         intensities = self.intensities / jnp.sum(self.intensities)
+
+        laser_profile = SpeckleProfile(
+            self.wavelength,
+            (1, 0),  # polarized along x
+            self.energy,
+            self.focal_length,
+            (self.beam_aperture_x, self.beam_aperture_y),
+            [self.n_beamlets_x, self.n_beamlets_y],
+            "FM SSD",  # temporal smoothing type
+            self.relative_laser_bandwidth,
+            (self.ssd_phase_modulation_amplitude_x, self.ssd_phase_modulation_amplitude_y),
+            (self.ssd_number_color_cycles_x, self.ssd_number_color_cycles_y),
+            (self.ssd_transverse_bandwidth_distribution_x, self.ssd_transverse_bandwidth_distribution_y),
+        )
+
         args["drivers"]["E0"] = {
             "delta_omega": self.delta_omega,
             "phases": jnp.tanh(self.phases) * jnp.pi,
             "intensities": intensities,
+            "laser_profile": laser_profile,
         } | self.envelope
+
         return state, args
 
 
@@ -173,6 +223,7 @@ class ArbitraryDriver(UniformDriver):
             "phases": jnp.tanh(self.phases) * jnp.pi,
             "intensities": intensities,
         } | self.envelope
+
         return state, args
 
 

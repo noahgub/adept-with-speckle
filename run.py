@@ -22,8 +22,13 @@ if __name__ == "__main__":
     exo = ergoExo()
 
     if args.run_id is None:
-        with open(f"{os.path.join(os.getcwd(), args.cfg)}.yaml", "r") as fi:
+
+        base_cfg_path = os.path.abspath(os.path.expanduser(args.cfg))
+        config_file_path = f"{base_cfg_path}.yaml"
+        with open(config_file_path, "r") as fi:
             cfg = yaml.safe_load(fi)
+        # with open(f"{os.path.join(os.getcwd(), args.cfg)}.yaml", "r") as fi:
+        #     cfg = yaml.safe_load(fi)
         modules = exo.setup(cfg=cfg)
         sol, post_out, run_id = exo(modules)
 

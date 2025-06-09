@@ -29,8 +29,10 @@ class SplitStep:
         self.one_over_ksq = cfg["grid"]["one_over_ksq"]
         self.zero_mask = cfg["grid"]["zero_mask"]
         self.low_pass_filter = cfg["grid"]["low_pass_filter"]
-
+        
         self.nu_coll = cfg["units"]["derived"]["nu_coll"]
+        
+        self.laser_type = cfg["drivers"]["E0"]["laser_type"]
 
     def _unpack_y_(self, y: Dict[str, Array]) -> Dict[str, Array]:
         new_y = {}
@@ -57,7 +59,13 @@ class SplitStep:
                 driver_args["E0"]["tc"] + driver_args["E0"]["tw"] / 2,
                 t,
             )
-            y["E0"] = t_coeff * self.light.laser_update(t, y, driver_args["E0"])
+
+            if self.laser_type == "plane_wave":
+                y["E0"] = t_coeff * self.light.laser_update(t, y, driver_args["E0"])
+            elif self.laser_type == "speckled":
+                y["E0"] = t_coeff * self.light.lasy_update(t, y, driver_args["E0"])
+            else:
+                raise NotImplementedError (f"Laser type -- {self.laser_type} -- not implemented")
 
         # if self.cfg["terms"]["light"]["update"]:
         # y["E0"] = y["E0"] + self.dt * jnp.real(k1_E0)
@@ -91,7 +99,7 @@ class SplitStep:
 
         # split step
         new_y = self.light_split_step(t, new_y, args["drivers"])
-
+        
         if "E2" in args["drivers"]:
             new_y["epw"] += self.dt * self.epw.driver(args["drivers"]["E2"], t)
         new_y["epw"] = self.epw(t, new_y, args)

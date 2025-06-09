@@ -1,5 +1,12 @@
+import sys
+import os
+
+# sys.path.append(os.path.abspath("C:/Users/ngub/Documents/Projects/lasy"))
+# sys.path.append(os.path.abspath("C:/Users/ngub/Documents/Projects/adept"))
+
 from typing import Dict, Tuple
 from jax import numpy as jnp, Array
+from lasy.profiles.speckle_profile import SpeckleProfile
 
 
 class Light:
@@ -10,6 +17,35 @@ class Light:
         self.w0 = cfg["units"]["derived"]["w0"]
         self.dE0x = jnp.zeros((cfg["grid"]["nx"], cfg["grid"]["ny"]))
         self.x = cfg["grid"]["x"]
+        self.y = cfg["grid"]["y"]
+    
+    def lasy_update(self, t, y, light_wave):
+        
+        """
+        This function propagates the laser in the direction of the beam at time t for lasy's speckled
+        laser profile
+
+        :param t: time
+        :param y: state variables
+        :param light_wave: driver args
+        :return: updated laser field
+        """
+        laser_profile = light_wave["laser_profile"] # lasy laser profile
+
+        y_with_expanded_dims = self.y[None, :, None]
+        x_with_expanded_dims = jnp.zeros_like(y_with_expanded_dims)
+        t_with_expanded_dims = jnp.full_like(y_with_expanded_dims, t)
+        E0y = laser_profile.evaluate(x_with_expanded_dims, y_with_expanded_dims, t_with_expanded_dims)[..., 0] # complex envelope
+
+        wpe = self.w0 * jnp.sqrt(y["background_density"])
+        delta_omega = 0
+        k0 = self.w0 / self.c * jnp.sqrt((1 + 0j + delta_omega) ** 2 - wpe**2 / self.w0**2)
+        propagator = 1j * k0 * self.x[:, None]
+        
+        # Propagate the field in direction of the beam
+        E0xy = E0y * jnp.exp(propagator)
+
+        return jnp.stack([self.dE0x, E0xy], axis=-1)
 
     def laser_update(self, t: float, y: jnp.ndarray, light_wave: Dict) -> Tuple[jnp.ndarray, jnp.ndarray]:
         """
