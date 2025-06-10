@@ -1,13 +1,5 @@
-import sys
-import os
-
-# sys.path.append(os.path.abspath("C:/Users/ngub/Documents/Projects/lasy"))
-# sys.path.append(os.path.abspath("C:/Users/ngub/Documents/Projects/adept"))
-
 from typing import Dict, Tuple
 from jax import numpy as jnp, Array
-from lasy.profiles.speckle_profile import SpeckleProfile
-
 
 class Light:
     def __init__(self, cfg) -> None:
