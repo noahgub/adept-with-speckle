@@ -21,7 +21,9 @@ class SpectralPotential:
         self.boundary_envelope = cfg["grid"]["absorbing_boundaries"]
         self.dt = cfg["grid"]["dt"]
         self.cfg = cfg
-        self.amp_key, self.phase_key = jax.random.split(jax.random.PRNGKey(np.random.randint(2**20)), 2)
+        self.amp_key, self.phase_key = jax.random.split(
+            jax.random.PRNGKey(np.random.randint(2**20)), 2
+        )
         self.low_pass_filter = cfg["grid"]["low_pass_filter"]
         zero_mask = cfg["grid"]["zero_mask"]
         self.low_pass_filter = self.low_pass_filter * zero_mask
@@ -98,14 +100,20 @@ class SpectralPotential:
         tpd2 = 1j * self.ky[None, :] * self.one_over_ksq * E0_divE_k
         tpd2 = jnp.fft.ifft2(tpd2 * self.low_pass_filter)
 
-        total_tpd = self.tpd_const * jnp.exp(-1j * (self.w0 - 2 * self.wp0) * t) * (tpd1 + tpd2)
+        total_tpd = (
+            self.tpd_const * jnp.exp(-1j * (self.w0 - 2 * self.wp0) * t) * (tpd1 + tpd2)
+        )
 
         return total_tpd
 
     def get_noise(self):
         random_amps = 1.0  # jax.random.uniform(self.amp_key, (self.nx, self.ny))
-        random_phases = 2 * np.pi * jax.random.uniform(self.phase_key, (self.nx, self.ny))
-        return jnp.fft.ifft2(random_amps * jnp.exp(1j * random_phases) * self.low_pass_filter)
+        random_phases = (
+            2 * np.pi * jax.random.uniform(self.phase_key, (self.nx, self.ny))
+        )
+        return jnp.fft.ifft2(
+            random_amps * jnp.exp(1j * random_phases) * self.low_pass_filter
+        )
 
     def __call__(self, t: float, y: Dict[str, Array], args: Dict) -> Array:
         phi = y["epw"]
@@ -116,7 +124,10 @@ class SpectralPotential:
 
         # linear propagation
         if self.cfg["terms"]["epw"]["linear"]:
-            phi = jnp.fft.ifft2(jnp.fft.fft2(phi) * jnp.exp(-1j * 1.5 * vte_sq[0, 0] / self.wp0 * self.k_sq * self.dt))
+            phi = jnp.fft.ifft2(
+                jnp.fft.fft2(phi)
+                * jnp.exp(-1j * 1.5 * vte_sq[0, 0] / self.wp0 * self.k_sq * self.dt)
+            )
 
         ex, ey = self.calc_fields_from_phi(phi)
 
@@ -125,8 +136,20 @@ class SpectralPotential:
 
         # density gradient
         if self.cfg["terms"]["epw"]["density_gradient"]:
-            ex *= jnp.exp(-1j * self.wp0 / 2.0 * (background_density / self.envelope_density - 1) * self.dt)
-            ey *= jnp.exp(-1j * self.wp0 / 2.0 * (background_density / self.envelope_density - 1) * self.dt)
+            ex *= jnp.exp(
+                -1j
+                * self.wp0
+                / 2.0
+                * (background_density / self.envelope_density - 1)
+                * self.dt
+            )
+            ey *= jnp.exp(
+                -1j
+                * self.wp0
+                / 2.0
+                * (background_density / self.envelope_density - 1)
+                * self.dt
+            )
 
         # if boundary_damping:
         ex = ex * self.boundary_envelope

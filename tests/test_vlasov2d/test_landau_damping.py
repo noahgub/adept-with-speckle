@@ -52,10 +52,16 @@ def test_single_resonance(real_or_imag):
         # run
         mlflow.set_experiment(mod_defaults["mlflow"]["experiment"])
         # modify config
-        with mlflow.start_run(run_name=mod_defaults["mlflow"]["run"], log_system_metrics=True) as mlflow_run:
+        with mlflow.start_run(
+            run_name=mod_defaults["mlflow"]["run"], log_system_metrics=True
+        ) as mlflow_run:
             result, datasets = run(mod_defaults)
             efs = result.ys["fields"]["ex"]
-            ek1 = 2.0 / mod_defaults["grid"]["nx"] * np.fft.fft2(efs, axes=(1, 2))[:, 1, 0]
+            ek1 = (
+                2.0
+                / mod_defaults["grid"]["nx"]
+                * np.fft.fft2(efs, axes=(1, 2))[:, 1, 0]
+            )
             ek1_mag = np.abs(ek1)
             if real_or_imag == "imag":
                 frslc = slice(-64, -4)
@@ -78,9 +84,13 @@ def test_single_resonance(real_or_imag):
                     }
                 )
 
-                np.testing.assert_almost_equal(measured_damping_rate, actual_damping_rate, decimal=2)
+                np.testing.assert_almost_equal(
+                    measured_damping_rate, actual_damping_rate, decimal=2
+                )
             else:
-                env, freq = electrostatic.get_nlfs(ek1, result.ts["fields"][1] - result.ts["fields"][0])
+                env, freq = electrostatic.get_nlfs(
+                    ek1, result.ts["fields"][1] - result.ts["fields"][0]
+                )
                 frslc = slice(-200, -100)
                 print(
                     f"Frequency check \n"
@@ -94,7 +104,9 @@ def test_single_resonance(real_or_imag):
                         "measured frequency": float(measured_resonance),
                     }
                 )
-                np.testing.assert_almost_equal(measured_resonance, actual_resonance, decimal=2)
+                np.testing.assert_almost_equal(
+                    measured_resonance, actual_resonance, decimal=2
+                )
 
 
 if __name__ == "__main__":

@@ -142,7 +142,9 @@ def linkcode_resolve(domain, info):
     # Fix links with "../../../" or "..\\..\\..\\"
     filepath = "/".join(filepath[filepath.find(top_level) :].split("\\"))
 
-    final_link = linkcode_url.format(filepath=filepath, linestart=linestart, linestop=linestop)
+    final_link = linkcode_url.format(
+        filepath=filepath, linestart=linestart, linestop=linestop
+    )
     print(f"Final Link for {fullname}: {final_link}")
     return final_link
 

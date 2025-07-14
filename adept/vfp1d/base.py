@@ -17,7 +17,9 @@ class BaseVFP1D(ADEPTModule):
         super().__init__(cfg)
 
     def post_process(self, solver_result: Dict, td: str) -> Dict:
-        return post_process(solver_result["solver result"], cfg=self.cfg, td=td, args=self.args)
+        return post_process(
+            solver_result["solver result"], cfg=self.cfg, td=td, args=self.args
+        )
 
     def write_units(self) -> Dict:
         ne = u.Quantity(self.cfg["units"]["reference electron density"]).to("1/cm^3")
@@ -32,7 +34,9 @@ class BaseVFP1D(ADEPTModule):
         wp0 = np.sqrt(n0 * csts.e.to("C") ** 2.0 / (csts.m_e * csts.eps0)).to("Hz")
         tp0 = (1 / wp0).to("fs")
 
-        vth = np.sqrt(2 * Te / csts.m_e).to("m/s")  # mean square velocity eq 4-51a in Shkarofsky
+        vth = np.sqrt(2 * Te / csts.m_e).to(
+            "m/s"
+        )  # mean square velocity eq 4-51a in Shkarofsky
 
         x0 = (csts.c / wp0).to("nm")
 
@@ -105,20 +109,33 @@ class BaseVFP1D(ADEPTModule):
         :return:
         """
         cfg_grid = self.cfg["grid"]
-        cfg_grid["xmax"] = (_Q(cfg_grid["xmax"]) / _Q(self.cfg["units"]["derived"]["x0"])).to("").value
-        cfg_grid["xmin"] = (_Q(cfg_grid["xmin"]) / _Q(self.cfg["units"]["derived"]["x0"])).to("").value
+        cfg_grid["xmax"] = (
+            (_Q(cfg_grid["xmax"]) / _Q(self.cfg["units"]["derived"]["x0"])).to("").value
+        )
+        cfg_grid["xmin"] = (
+            (_Q(cfg_grid["xmin"]) / _Q(self.cfg["units"]["derived"]["x0"])).to("").value
+        )
         cfg_grid["dx"] = cfg_grid["xmax"] / cfg_grid["nx"]
 
         # sqrt(2 * k * T / m)
         cfg_grid["vmax"] = (
             8
-            * np.sqrt((_Q(self.cfg["units"]["reference electron temperature"]) / (csts.m_e * csts.c**2.0)).to("")).value
+            * np.sqrt(
+                (
+                    _Q(self.cfg["units"]["reference electron temperature"])
+                    / (csts.m_e * csts.c**2.0)
+                ).to("")
+            ).value
         )
 
         cfg_grid["dv"] = cfg_grid["vmax"] / cfg_grid["nv"]
 
-        cfg_grid["tmax"] = (_Q(cfg_grid["tmax"]) / self.cfg["units"]["derived"]["tp0"]).to("").value
-        cfg_grid["dt"] = (_Q(cfg_grid["dt"]) / self.cfg["units"]["derived"]["tp0"]).to("").value
+        cfg_grid["tmax"] = (
+            (_Q(cfg_grid["tmax"]) / self.cfg["units"]["derived"]["tp0"]).to("").value
+        )
+        cfg_grid["dt"] = (
+            (_Q(cfg_grid["dt"]) / self.cfg["units"]["derived"]["tp0"]).to("").value
+        )
 
         cfg_grid["nt"] = int(cfg_grid["tmax"] / cfg_grid["dt"]) + 1
 
@@ -232,7 +249,12 @@ class BaseVFP1D(ADEPTModule):
         self.diffeqsolve_quants = dict(
             terms=ODETerm(OSHUN1D(self.cfg)),
             solver=Stepper(),
-            saveat=dict(subs={k: SubSaveAt(ts=v["t"]["ax"], fn=v["func"]) for k, v in self.cfg["save"].items()}),
+            saveat=dict(
+                subs={
+                    k: SubSaveAt(ts=v["t"]["ax"], fn=v["func"])
+                    for k, v in self.cfg["save"].items()
+                }
+            ),
         )
 
     def __call__(self, trainable_modules: Dict, args: Dict):

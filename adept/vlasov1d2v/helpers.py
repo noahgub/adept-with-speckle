@@ -17,7 +17,9 @@ from adept.vlasov1d2v.integrator import VlasovMaxwell, Stepper
 from adept.vlasov1d2v.storage import store_f, store_fields, get_save_quantities
 from adept._base_ import get_envelope
 
-gamma_da = xarray.open_dataarray(os.path.join(os.path.dirname(__file__), "..", "vlasov1d", "gamma_func_for_sg.nc"))
+gamma_da = xarray.open_dataarray(
+    os.path.join(os.path.dirname(__file__), "..", "vlasov1d", "gamma_func_for_sg.nc")
+)
 m_ax = gamma_da.coords["m"].data
 g_3_m = np.squeeze(gamma_da.loc[{"gamma": "3/m"}].data)
 g_5_m = np.squeeze(gamma_da.loc[{"gamma": "5/m"}].data)
@@ -73,7 +75,9 @@ def _initialize_distribution_(
     # single_dist = -(np.power(np.abs((vax[None, :] - v0) / alpha / np.sqrt(T0)), m))
 
     # single_dist = np.exp(single_dist)
-    single_dist = np.exp(-(vax[None, :, None] ** 2.0 + vax[None, None, :] ** 2.0) / 2 / T0)
+    single_dist = np.exp(
+        -(vax[None, :, None] ** 2.0 + vax[None, None, :] ** 2.0) / 2 / T0
+    )
 
     # for ix in range(nx):
     f = np.repeat(single_dist, nx, axis=0)
@@ -128,7 +132,10 @@ def _initialize_total_distribution_(cfg, cfg_grid):
                     _Q(species_params["gradient scale length"]).to("nm").magnitude
                     / cfg["units"]["derived"]["x0"].to("nm").magnitude
                 )
-                nprof = species_params["val at center"] + (cfg_grid["x"] - species_params["center"]) / L
+                nprof = (
+                    species_params["val at center"]
+                    + (cfg_grid["x"] - species_params["center"]) / L
+                )
                 nprof = mask * nprof
             elif species_params["basis"] == "exponential":
                 left = species_params["center"] - species_params["width"] * 0.5
@@ -143,7 +150,9 @@ def _initialize_total_distribution_(cfg, cfg_grid):
                     _Q(species_params["gradient scale length"]).to("nm").magnitude
                     / cfg["units"]["derived"]["x0"].to("nm").magnitude
                 )
-                nprof = species_params["val at center"] * np.exp((cfg_grid["x"] - species_params["center"]) / L)
+                nprof = species_params["val at center"] * np.exp(
+                    (cfg_grid["x"] - species_params["center"]) / L
+                )
                 nprof = mask * nprof
 
             elif species_params["basis"] == "tanh":
@@ -154,7 +163,9 @@ def _initialize_total_distribution_(cfg, cfg_grid):
 
                 if species_params["bump_or_trough"] == "trough":
                     nprof = 1 - nprof
-                nprof = species_params["baseline"] + species_params["bump_height"] * nprof
+                nprof = (
+                    species_params["baseline"] + species_params["bump_height"] * nprof
+                )
 
             elif species_params["basis"] == "sine":
                 baseline = species_params["baseline"]
@@ -276,12 +287,16 @@ def get_solver_quantities(cfg: Dict) -> Dict:
     # get_profile_with_mask(cfg["nu"]["time-profile"], t, cfg["nu"]["time-profile"]["bump_or_trough"])
     cfg_grid["ktprof"] = 1.0
     # get_profile_with_mask(cfg["krook"]["time-profile"], t, cfg["krook"]["time-profile"]["bump_or_trough"])
-    cfg_grid["n_prof_total"], cfg_grid["starting_f"] = _initialize_total_distribution_(cfg, cfg_grid)
+    cfg_grid["n_prof_total"], cfg_grid["starting_f"] = _initialize_total_distribution_(
+        cfg, cfg_grid
+    )
 
     cfg_grid["kprof"] = np.ones_like(cfg_grid["n_prof_total"])
     # get_profile_with_mask(cfg["krook"]["space-profile"], xs, cfg["krook"]["space-profile"]["bump_or_trough"])
 
-    cfg_grid["ion_charge"] = np.zeros_like(cfg_grid["n_prof_total"]) + cfg_grid["n_prof_total"]
+    cfg_grid["ion_charge"] = (
+        np.zeros_like(cfg_grid["n_prof_total"]) + cfg_grid["n_prof_total"]
+    )
 
     cfg_grid["x_a"] = np.concatenate(
         [
@@ -346,7 +361,12 @@ def get_diffeqsolve_quants(cfg):
     return dict(
         terms=ODETerm(VlasovMaxwell(cfg)),
         solver=Stepper(),
-        saveat=dict(subs={k: SubSaveAt(ts=v["t"]["ax"], fn=v["func"]) for k, v in cfg["save"].items()}),
+        saveat=dict(
+            subs={
+                k: SubSaveAt(ts=v["t"]["ax"], fn=v["func"])
+                for k, v in cfg["save"].items()
+            }
+        ),
     )
 
 
@@ -381,7 +401,9 @@ def post_process(result, cfg: Dict, td: str):
 
                 np.log10(np.abs(fld)).plot()
                 plt.savefig(
-                    os.path.join(td, "plots", "fields", "logplots", f"spacetime-log-{nm[7:]}.png"),
+                    os.path.join(
+                        td, "plots", "fields", "logplots", f"spacetime-log-{nm[7:]}.png"
+                    ),
                     bbox_inches="tight",
                 )
                 plt.close()
@@ -395,7 +417,10 @@ def post_process(result, cfg: Dict, td: str):
 
         elif k.startswith("default"):
             scalars_xr = xarray.Dataset(
-                {k: xarray.DataArray(v, coords=(("t", result.ts["default"]),)) for k, v in result.ys["default"].items()}
+                {
+                    k: xarray.DataArray(v, coords=(("t", result.ts["default"]),))
+                    for k, v in result.ys["default"].items()
+                }
             )
             scalars_xr.to_netcdf(
                 os.path.join(

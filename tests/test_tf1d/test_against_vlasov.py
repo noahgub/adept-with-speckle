@@ -44,7 +44,9 @@ def test_single_resonance():
     exo.setup(mod_defaults)
     result, datasets, run_id = exo(None)
     result = result["solver result"]
-    vds = xr.open_dataset("tests/test_tf1d/vlasov-reference/all-fields-kx.nc", engine="h5netcdf")
+    vds = xr.open_dataset(
+        "tests/test_tf1d/vlasov-reference/all-fields-kx.nc", engine="h5netcdf"
+    )
 
     nk1_fluid = result.ys["kx"]["electron"]["n"]["mag"][:, 1]
     nk1_vlasov = vds["n-(k_x)"][:, 1].data
@@ -54,9 +56,13 @@ def test_single_resonance():
     vlasov_slc = slice(700, 850)
 
     vlasov_damping_rate = np.mean(
-        np.gradient(nk1_vlasov[vlasov_slc], (t_vlasov[1] - t_vlasov[0])) / nk1_vlasov[vlasov_slc]
+        np.gradient(nk1_vlasov[vlasov_slc], (t_vlasov[1] - t_vlasov[0]))
+        / nk1_vlasov[vlasov_slc]
     )
-    fluid_damping_rate = np.mean(np.gradient(nk1_fluid[fluid_slc], (t_fluid[1] - t_fluid[0])) / nk1_fluid[fluid_slc])
+    fluid_damping_rate = np.mean(
+        np.gradient(nk1_fluid[fluid_slc], (t_fluid[1] - t_fluid[0]))
+        / nk1_fluid[fluid_slc]
+    )
 
     print(f"{vlasov_damping_rate=}, {fluid_damping_rate=}")
     print(f"{np.amax(nk1_vlasov)=}, {np.amax(nk1_fluid)=}")

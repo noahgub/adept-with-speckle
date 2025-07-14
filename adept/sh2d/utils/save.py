@@ -12,7 +12,9 @@ from matplotlib import pyplot as plt
 def get_save_func(cfg):
     if cfg["save"]["func"]["is_on"]:
         if cfg["save"]["x"]["is_on"]:
-            dx = (cfg["save"]["x"]["xmax"] - cfg["save"]["x"]["xmin"]) / cfg["save"]["x"]["nx"]
+            dx = (cfg["save"]["x"]["xmax"] - cfg["save"]["x"]["xmin"]) / cfg["save"][
+                "x"
+            ]["nx"]
             cfg["save"]["x"]["ax"] = jnp.linspace(
                 cfg["save"]["x"]["xmin"] + dx / 2.0,
                 cfg["save"]["x"]["xmax"] - dx / 2.0,
@@ -30,7 +32,9 @@ def get_save_func(cfg):
 
             def save_kx(field):
                 complex_field = jnp.fft.rfft(field, axis=0) * 2.0 / cfg["grid"]["nx"]
-                interped_field = jnp.interp(cfg["save"]["kx"]["ax"], cfg["grid"]["kxr"], complex_field)
+                interped_field = jnp.interp(
+                    cfg["save"]["kx"]["ax"], cfg["grid"]["kxr"], complex_field
+                )
                 return {
                     "mag": jnp.abs(interped_field),
                     "ang": jnp.angle(interped_field),
@@ -147,13 +151,19 @@ def save_vector_fields(result, cfg, td):
 
 def calc_n(f00, v):
     return np.real(
-        4.0 * np.pi * (v[2] - v[1]) * np.sum(f00.view(np.complex128) * v[None, None, None, :] ** 2.0, axis=-1)
+        4.0
+        * np.pi
+        * (v[2] - v[1])
+        * np.sum(f00.view(np.complex128) * v[None, None, None, :] ** 2.0, axis=-1)
     )
 
 
 def calc_T(f00, v):
     return np.real(
-        4.0 * np.pi * (v[2] - v[1]) * np.sum(0.5 * f00.view(np.complex128) * v[None, None, None, :] ** 4.0, axis=-1)
+        4.0
+        * np.pi
+        * (v[2] - v[1])
+        * np.sum(0.5 * f00.view(np.complex128) * v[None, None, None, :] ** 4.0, axis=-1)
     )
 
 
@@ -161,7 +171,12 @@ def calc_j(f1, v):
     return jnp.concatenate(
         [
             -np.real(
-                4.0 * np.pi * (v[2] - v[1]) * np.sum(f1[0].view(np.complex128) * v[None, None, None, :] ** 3.0, axis=-1)
+                4.0
+                * np.pi
+                * (v[2] - v[1])
+                * np.sum(
+                    f1[0].view(np.complex128) * v[None, None, None, :] ** 3.0, axis=-1
+                )
             )[..., None],
             -8.0
             * np.pi

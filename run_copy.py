@@ -52,11 +52,15 @@ def run_one_val_and_grad(run_id: str, _cfg_path: str, epoch: int):
         modules["laser"], modules["laser"].get_partition_spec()
     )
 
-    val, grad, (sol, ppo, _) = exo.val_and_grad(diff_modules, args={"static_modules": static_modules})
+    val, grad, (sol, ppo, _) = exo.val_and_grad(
+        diff_modules, args={"static_modules": static_modules}
+    )
 
     laser_driver_object = grad["laser"]
     static_laser_driver_object = static_modules["laser"]
-    model_cfg = static_laser_driver_object.model_cfg  # Get from static modules so not None
+    model_cfg = (
+        static_laser_driver_object.model_cfg
+    )  # Get from static modules so not None
     metrics_to_log = {}
     for param_name, param_config in model_cfg.items():
         if param_config.get("learned"):
@@ -108,7 +112,9 @@ def calc_loss_and_grads(modules: Dict, epoch: int, orig_cfg: Dict):
         output_file = os.path.join(_td, f"stdout_stderr.txt")
         with open(output_file, "w") as f:
             with redirect_stdout(f), redirect_stderr(f):
-                val, grad = run_one_val_and_grad(run_id=nested_run.info.run_id, _cfg_path=_cfg_path, epoch=epoch)
+                val, grad = run_one_val_and_grad(
+                    run_id=nested_run.info.run_id, _cfg_path=_cfg_path, epoch=epoch
+                )
 
         mlflow.log_artifacts(_td, run_id=nested_run.info.run_id)
 
@@ -140,7 +146,9 @@ def optax_loop(orig_cfg: Dict, modules: Dict):
         decay_steps=orig_cfg["opt"]["decay_steps"],
     )
     opt = optax.adam(learning_rate=lr_sched)
-    opt_state = opt.init(eqx.filter(modules["laser"], eqx.is_array))  # initialize the optimizer state
+    opt_state = opt.init(
+        eqx.filter(modules["laser"], eqx.is_array)
+    )  # initialize the optimizer state
 
     for i in range(20):  # range(200):
         _, _, laser_grad = calc_loss_and_grads(modules, i, orig_cfg)
@@ -172,7 +180,9 @@ def scipy_loop(orig_cfg: Dict, modules: Dict) -> OptimizeResult:
     class Fitter:
         def __init__(self, _modules):
             self.model_cfg = _modules["laser"].model_cfg
-            x0, self.static_params = eqx.partition(_modules["laser"], _modules["laser"].get_partition_spec())
+            x0, self.static_params = eqx.partition(
+                _modules["laser"], _modules["laser"].get_partition_spec()
+            )
             self.flattened_x0, self.unravel_pytree = ravel_pytree(x0)
             self.epoch = 0
             # self.parent_run_id = parent_run_id
@@ -218,7 +228,9 @@ def run_opt(_cfg_path: str):
     from ml_for_lpi.ml4tpd import TPDModule
     import jax
 
-    logging.basicConfig(filename=f"runlog-tpd-learn-{str(uuid.uuid4())[-4:]}.log", level=logging.INFO)
+    logging.basicConfig(
+        filename=f"runlog-tpd-learn-{str(uuid.uuid4())[-4:]}.log", level=logging.INFO
+    )
 
     # jax.config.update("jax_platform_name", "cpu")
     # jax.config.update("jax_enable_x64", True)
@@ -233,7 +245,9 @@ def run_opt(_cfg_path: str):
     elif cfg["opt"]["method"] == "scipy":
         optimization_loop = scipy_loop
     else:
-        raise NotImplementedError(f"Optimization method {cfg['opt']['method']} not implemented.")
+        raise NotImplementedError(
+            f"Optimization method {cfg['opt']['method']} not implemented."
+        )
 
     _tt = cfg["units"]["reference electron temperature"]
     _gsl = cfg["density"]["gradient scale length"]

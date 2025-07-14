@@ -19,7 +19,9 @@ class Collisions:
         self.coll_ee_over_x = vmap(self._single_x_ee_, in_axes=(0, 0, None))
         self.coll_ei_over_x = vmap(self._single_x_ei_, in_axes=(0, 0, None))
 
-    def _single_x_ei_(self, nuei: jnp.float64, f_vxvy: jnp.ndarray, dt: jnp.float64) -> jnp.ndarray:
+    def _single_x_ei_(
+        self, nuei: jnp.float64, f_vxvy: jnp.ndarray, dt: jnp.float64
+    ) -> jnp.ndarray:
         # f_vxvy = self.ei_fp.explicit_vy(nuei, f_vxvy, 0.5 * dt)
         # f_vxvy = self.ei_fp.implicit_vx(nuei, f_vxvy, 0.5 * dt)
         # f_vxvy = self.ei_fp.implicit_cross_term(nuei, f_vxvy, dt)
@@ -28,7 +30,9 @@ class Collisions:
 
         return self.ei_fp.solve_azimuthal(f_vxvy, nuei, dt)
 
-    def _single_x_ee_(self, nu_ee: jnp.float64, f_vxvy: jnp.ndarray, dt: jnp.float64) -> jnp.ndarray:
+    def _single_x_ee_(
+        self, nu_ee: jnp.float64, f_vxvy: jnp.ndarray, dt: jnp.float64
+    ) -> jnp.ndarray:
         f_vxvy = self.ee_fp.explicit_vy(nu_ee, f_vxvy, 0.5 * dt)
         f_vxvy = self.ee_fp.implicit_vx(nu_ee, f_vxvy, 0.5 * dt)
         f_vxvy = self.ee_fp.explicit_vx(nu_ee, f_vxvy, 0.5 * dt)
@@ -93,28 +97,50 @@ class Dougherty:
         return jnp.gradient(f_vxvy, self.dv, axis=1)
 
     def get_init_quants_x(self, f_vxvy: jnp.ndarray):
-        vxbar = jnp.sum(jnp.sum(f_vxvy * self.v[:, None], axis=1), axis=0) * self.dv * self.dv
-        v0t_sq = jnp.sum(jnp.sum(f_vxvy * (self.v[:, None] - vxbar) ** 2.0, axis=1), axis=0) * self.dv * self.dv
+        vxbar = (
+            jnp.sum(jnp.sum(f_vxvy * self.v[:, None], axis=1), axis=0)
+            * self.dv
+            * self.dv
+        )
+        v0t_sq = (
+            jnp.sum(jnp.sum(f_vxvy * (self.v[:, None] - vxbar) ** 2.0, axis=1), axis=0)
+            * self.dv
+            * self.dv
+        )
         return vxbar, v0t_sq
 
     def get_init_quants_y(self, f_vxvy: jnp.ndarray):
-        vybar = jnp.sum(jnp.sum(f_vxvy * self.v[None, :], axis=1), axis=0) * self.dv * self.dv
-        v0t_sq = jnp.sum(jnp.sum(f_vxvy * (self.v[None, :] - vybar) ** 2.0, axis=1), axis=0) * self.dv * self.dv
+        vybar = (
+            jnp.sum(jnp.sum(f_vxvy * self.v[None, :], axis=1), axis=0)
+            * self.dv
+            * self.dv
+        )
+        v0t_sq = (
+            jnp.sum(jnp.sum(f_vxvy * (self.v[None, :] - vybar) ** 2.0, axis=1), axis=0)
+            * self.dv
+            * self.dv
+        )
 
         return vybar, v0t_sq
 
     def _get_operator_(self, nu, vbar, v0t_sq, dt):
         # TODO
-        lower_diagonal = nu * dt * (-v0t_sq / self.dv**2.0 + (self.v[:-1] - vbar) / 2.0 / self.dv)
+        lower_diagonal = (
+            nu * dt * (-v0t_sq / self.dv**2.0 + (self.v[:-1] - vbar) / 2.0 / self.dv)
+        )
         diagonal = 1.0 + nu * dt * self.ones * (2.0 * v0t_sq / self.dv**2.0)
-        upper_diagonal = nu * dt * (-v0t_sq / self.dv**2.0 - (self.v[1:] - vbar) / 2.0 / self.dv)
+        upper_diagonal = (
+            nu * dt * (-v0t_sq / self.dv**2.0 - (self.v[1:] - vbar) / 2.0 / self.dv)
+        )
         return lx.TridiagonalLinearOperator(
             diagonal=diagonal,
             upper_diagonal=upper_diagonal,
             lower_diagonal=lower_diagonal,
         )
 
-    def implicit_vx(self, nu: jnp.float64, f_vxvy: jnp.ndarray, dt: jnp.float64) -> jnp.ndarray:
+    def implicit_vx(
+        self, nu: jnp.float64, f_vxvy: jnp.ndarray, dt: jnp.float64
+    ) -> jnp.ndarray:
         """
 
         :param nu:
@@ -127,7 +153,9 @@ class Dougherty:
         operator = self._get_operator_(nu, vxbar, v0t_sq, dt)
         return self.scan_over_vy(operator, f_vxvy)
 
-    def implicit_vy(self, nu: jnp.float64, f_vxvy: jnp.ndarray, dt: jnp.float64) -> jnp.ndarray:
+    def implicit_vy(
+        self, nu: jnp.float64, f_vxvy: jnp.ndarray, dt: jnp.float64
+    ) -> jnp.ndarray:
         """
 
         :param nu:
@@ -205,7 +233,9 @@ class Banks:
         # vy = r sin th
 
         self.flat_oob_mask = np.where(r_interp > rmax - dr, 0, 1)
-        self.reshaped_oob_mask = self.flat_oob_mask.reshape(self.v.size, self.v.size, order="C")
+        self.reshaped_oob_mask = self.flat_oob_mask.reshape(
+            self.v.size, self.v.size, order="C"
+        )
 
         # Negative angles are corrected
         th_interp = np.where(th_interp < 0, 2 * np.pi + th_interp, th_interp)
@@ -288,4 +318,6 @@ class Banks:
         cart_data = self.pol2cart(f=fnew) * self.flat_oob_mask
 
         # The data is returned with the mask applied
-        return jnp.abs(cart_data.reshape(self.v.size, self.v.size, order="C")) + f_vxvy * (1 - self.reshaped_oob_mask)
+        return jnp.abs(
+            cart_data.reshape(self.v.size, self.v.size, order="C")
+        ) + f_vxvy * (1 - self.reshaped_oob_mask)
