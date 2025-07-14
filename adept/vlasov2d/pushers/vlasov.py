@@ -15,28 +15,16 @@ class ExponentialSpatialAdvection:
         self.ky = cfg["grid"]["ky"]
         self.kx_mask = jnp.where(jnp.abs(self.kx) > 0, 1, 0)[:, None, None, None]
         self.ky_mask = jnp.where(jnp.abs(self.ky) > 0, 1, 0)[None, :, None, None]
-        self.i_kx_vx = (
-            -1j
-            * cfg["grid"]["kx"][:, None, None, None]
-            * cfg["grid"]["vx"][None, None, :, None]
-        )
-        self.i_ky_vy = (
-            -1j
-            * cfg["grid"]["ky"][None, :, None, None]
-            * cfg["grid"]["vy"][None, None, None, :]
-        )
+        self.i_kx_vx = -1j * cfg["grid"]["kx"][:, None, None, None] * cfg["grid"]["vx"][None, None, :, None]
+        self.i_ky_vy = -1j * cfg["grid"]["ky"][None, :, None, None] * cfg["grid"]["vy"][None, None, None, :]
         self.one_over_ikx = cfg["grid"]["one_over_kx"][:, None, None, None] / 1j
         self.one_over_iky = cfg["grid"]["one_over_ky"][None, :, None, None] / 1j
 
     def step_x(self, f, dt):
-        return jnp.real(
-            jnp.fft.ifft(jnp.fft.fft(f, axis=0) * jnp.exp(self.i_kx_vx * dt), axis=0)
-        )
+        return jnp.real(jnp.fft.ifft(jnp.fft.fft(f, axis=0) * jnp.exp(self.i_kx_vx * dt), axis=0))
 
     def step_y(self, f, dt):
-        return jnp.real(
-            jnp.fft.ifft(jnp.fft.fft(f, axis=1) * jnp.exp(self.i_ky_vy * dt), axis=1)
-        )
+        return jnp.real(jnp.fft.ifft(jnp.fft.fft(f, axis=1) * jnp.exp(self.i_ky_vy * dt), axis=1))
 
 
 class PSMVelocityAdvection:
@@ -50,9 +38,7 @@ class PSMVelocityAdvection:
         A[-1, 0] = 1
         self.A = jnp.array(A)
 
-        B = np.diag(2 * np.ones(cfg["grid"]["nv"]), k=0) + np.diag(
-            np.ones(cfg["grid"]["nv"]), k=1
-        )
+        B = np.diag(2 * np.ones(cfg["grid"]["nv"]), k=0) + np.diag(np.ones(cfg["grid"]["nv"]), k=1)
         # A[0, -1] = 1
         B[-1, 0] = 1
         self.B = jnp.array(B)

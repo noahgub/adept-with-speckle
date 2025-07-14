@@ -24,9 +24,7 @@ class Collisions:
         else:
             raise NotImplementedError
 
-    def __call__(
-        self, nu_fp: jnp.ndarray, nu_K: jnp.ndarray, f: jnp.ndarray, dt: jnp.float64
-    ) -> jnp.ndarray:
+    def __call__(self, nu_fp: jnp.ndarray, nu_K: jnp.ndarray, f: jnp.ndarray, dt: jnp.float64) -> jnp.ndarray:
         if self.cfg["terms"]["fokker_planck"]["is_on"]:
             # The three diagonals representing collision operator for all x
             cee_a, cee_b, cee_c = self.fp(nu=nu_fp, f_xv=f, dt=dt)
@@ -79,23 +77,9 @@ class LenardBernstein:
         """
 
         v0t_sq = self.vx_moment(f_xv * self.v[None, :] ** 2.0)
-        a = (
-            nu[:, None]
-            * dt
-            * (
-                -v0t_sq[:, None] / self.dv**2.0
-                + jnp.roll(self.v, 1)[None, :] / 2 / self.dv
-            )
-        )
+        a = nu[:, None] * dt * (-v0t_sq[:, None] / self.dv**2.0 + jnp.roll(self.v, 1)[None, :] / 2 / self.dv)
         b = 1.0 + nu[:, None] * dt * self.ones * (2.0 * v0t_sq[:, None] / self.dv**2.0)
-        c = (
-            nu[:, None]
-            * dt
-            * (
-                -v0t_sq[:, None] / self.dv**2.0
-                - jnp.roll(self.v, -1)[None, :] / 2 / self.dv
-            )
-        )
+        c = nu[:, None] * dt * (-v0t_sq[:, None] / self.dv**2.0 - jnp.roll(self.v, -1)[None, :] / 2 / self.dv)
         return a, b, c
 
 
@@ -126,18 +110,12 @@ class Dougherty:
         a = (
             nu[:, None]
             * dt
-            * (
-                -v0t_sq[:, None] / self.dv**2.0
-                + (jnp.roll(self.v, 1)[None, :] - vbar[:, None]) / 2.0 / self.dv
-            )
+            * (-v0t_sq[:, None] / self.dv**2.0 + (jnp.roll(self.v, 1)[None, :] - vbar[:, None]) / 2.0 / self.dv)
         )
         b = 1.0 + nu[:, None] * dt * self.ones * (2.0 * v0t_sq[:, None] / self.dv**2.0)
         c = (
             nu[:, None]
             * dt
-            * (
-                -v0t_sq[:, None] / self.dv**2.0
-                - (jnp.roll(self.v, -1)[None, :] - vbar[:, None]) / 2.0 / self.dv
-            )
+            * (-v0t_sq[:, None] / self.dv**2.0 - (jnp.roll(self.v, -1)[None, :] - vbar[:, None]) / 2.0 / self.dv)
         )
         return a, b, c

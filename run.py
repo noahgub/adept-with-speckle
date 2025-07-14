@@ -19,9 +19,7 @@ sys.path.append(os.path.abspath(ml_for_lpi_path))
 from ml_for_lpi.ml4tpd import TPDModule
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Automatic Differentiation Enabled Plasma Transport"
-    )
+    parser = argparse.ArgumentParser(description="Automatic Differentiation Enabled Plasma Transport")
     parser.add_argument("--cfg", help="enter path to cfg")
     parser.add_argument("--run_id", help="enter run_id to continue")
     args = parser.parse_args()

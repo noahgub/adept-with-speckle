@@ -13,8 +13,7 @@ class VelocityExponential:
     def __call__(self, f, e, dt):
         return jnp.real(
             jnp.fft.irfft(
-                jnp.exp(-1j * self.kv_real[None, :, None] * dt * e[:, None, None])
-                * jnp.fft.rfft(f, axis=1),
+                jnp.exp(-1j * self.kv_real[None, :, None] * dt * e[:, None, None]) * jnp.fft.rfft(f, axis=1),
                 axis=1,
             )
         )
@@ -22,15 +21,11 @@ class VelocityExponential:
 
 class VelocityCubicSpline:
     def __init__(self, cfg):
-        self.v = jnp.repeat(
-            cfg["grid"]["v"][None, :], repeats=cfg["grid"]["nx"], axis=0
-        )
+        self.v = jnp.repeat(cfg["grid"]["v"][None, :], repeats=cfg["grid"]["nx"], axis=0)
         self.v = jnp.repeat(self.v[..., None], repeats=cfg["grid"]["nv"], axis=-1)
 
         self.vx = cfg["grid"]["v"]
-        scan_vy = vmap(
-            partial(interp1d, method="cubic", extrap=True), in_axes=1, out_axes=1
-        )
+        scan_vy = vmap(partial(interp1d, method="cubic", extrap=True), in_axes=1, out_axes=1)
         self.scan_all_x_and_vy = vmap(scan_vy, in_axes=0, out_axes=0)
 
     def __call__(self, f, e, dt):
@@ -46,8 +41,7 @@ class SpaceExponential:
     def __call__(self, f, dt):
         return jnp.real(
             jnp.fft.irfft(
-                jnp.exp(-1j * self.kx_real[:, None, None] * dt * self.v[None, :, None])
-                * jnp.fft.rfft(f, axis=0),
+                jnp.exp(-1j * self.kx_real[:, None, None] * dt * self.v[None, :, None]) * jnp.fft.rfft(f, axis=0),
                 axis=0,
             )
         )

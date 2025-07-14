@@ -32,20 +32,10 @@ class FieldSolver:
         return jnp.sum(f, axis=3) * self.dvy
 
     def compute_jx(self, f):
-        return (
-            jnp.sum(jnp.sum(self.vx * f, axis=3), axis=2)
-            * self.kx_mask
-            * self.dvx
-            * self.dvy
-        )
+        return jnp.sum(jnp.sum(self.vx * f, axis=3), axis=2) * self.kx_mask * self.dvx * self.dvy
 
     def compute_jy(self, f):
-        return (
-            jnp.sum(jnp.sum(self.vy * f, axis=3), axis=2)
-            * self.ky_mask
-            * self.dvx
-            * self.dvy
-        )
+        return jnp.sum(jnp.sum(self.vy * f, axis=3), axis=2) * self.ky_mask * self.dvx * self.dvy
 
     def ampere(self, exk, eyk, bzk, dt):
         exkp = exk  # - dt * (1j * self.ky * bzk)

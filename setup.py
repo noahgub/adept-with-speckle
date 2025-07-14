@@ -17,11 +17,7 @@ with open(os.path.join(here, "README.md"), encoding="utf-8") as f:
 # get the current git commit hash
 def get_git_commit_hash():
     try:
-        return (
-            subprocess.check_output(["git", "rev-parse", "HEAD"])
-            .strip()
-            .decode("utf-8")
-        )
+        return subprocess.check_output(["git", "rev-parse", "HEAD"]).strip().decode("utf-8")
     except subprocess.CalledProcessError:
         return "unknown"
 
