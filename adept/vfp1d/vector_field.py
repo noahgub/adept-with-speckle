@@ -80,9 +80,13 @@ class OSHUN1D:
             Array: j(x)
 
         """
-        return -4 * jnp.pi / 3.0 * jnp.sum(f1 * self.v[None, :] ** 3.0, axis=1) * self.dv
+        return (
+            -4 * jnp.pi / 3.0 * jnp.sum(f1 * self.v[None, :] ** 3.0, axis=1) * self.dv
+        )
 
-    def implicit_e_solve(self, Z: Array, ni: Array, f0: Array, f10: Array, e: Array) -> Array:
+    def implicit_e_solve(
+        self, Z: Array, ni: Array, f0: Array, f10: Array, e: Array
+    ) -> Array:
         """
         This is the implicit solve for the electric field. It uses the "perturbed charge" method and is a direct solve.
 
@@ -139,9 +143,14 @@ class OSHUN1D:
         """
         f0, f1, e = this_y["f0"], this_y["f1"], this_y["e"]
 
-        prev_f0_approx = f0 + self.dt * (-e[:, None] / 3 * (self.ddv_f1(f1) + 2 / self.v * f1))
+        prev_f0_approx = f0 + self.dt * (
+            -e[:, None] / 3 * (self.ddv_f1(f1) + 2 / self.v * f1)
+        )
         # C_f1 = self.step_f10_coll(f1)
-        prev_f1_approx = f1 + self.dt * (-e[:, None] * self.ddv(f0) + self.ei.nuei_coeff * f1 / self.v[None, :] ** 3.0)
+        prev_f1_approx = f1 + self.dt * (
+            -e[:, None] * self.ddv(f0)
+            + self.ei.nuei_coeff * f1 / self.v[None, :] ** 3.0
+        )
 
         j = -4 * jnp.pi / 3.0 * jnp.sum(f1 * self.v[None, :] ** 3.0, axis=1) * self.dv
         prev_e_approx = e + self.dt * j
@@ -156,18 +165,32 @@ class OSHUN1D:
         new_f0, new_f1, new_e = y["f0"], y["f1"], y["e"]
         old_f0, old_f1, old_e = args["f0"], args["f1"], args["e"]
 
-        res_f0 = (new_f0 - old_f0) / self.dt - new_e[:, None] / 3 * (self.ddv_f1(new_f1) + 2 / self.v * new_f1)
+        res_f0 = (new_f0 - old_f0) / self.dt - new_e[:, None] / 3 * (
+            self.ddv_f1(new_f1) + 2 / self.v * new_f1
+        )
         # C_f1 = self.step_f10_coll(f1)
         res_f1 = (
-            (new_f1 - old_f1) / self.dt - new_e[:, None] * self.ddv(new_f0) + 1e-4 * new_f1 / self.v[None, :] ** 3.0
+            (new_f1 - old_f1) / self.dt
+            - new_e[:, None] * self.ddv(new_f0)
+            + 1e-4 * new_f1 / self.v[None, :] ** 3.0
         )
 
-        new_j = -4 * jnp.pi / 3.0 * jnp.sum(new_f1 * self.v[None, :] ** 3.0, axis=1) * self.dv
+        new_j = (
+            -4
+            * jnp.pi
+            / 3.0
+            * jnp.sum(new_f1 * self.v[None, :] ** 3.0, axis=1)
+            * self.dv
+        )
         res_e = (new_e - old_e) / self.dt + new_j
 
         # return {"f0": res_f0, "f1": res_f1, "e": res_e}
 
-        return jnp.sum(jnp.square(res_f0)) + jnp.sum(jnp.square(res_f1)) + jnp.sum(jnp.square(res_e))
+        return (
+            jnp.sum(jnp.square(res_f0))
+            + jnp.sum(jnp.square(res_f1))
+            + jnp.sum(jnp.square(res_e))
+        )
 
     def implicit_e_f0_f1_solve(self, f0, f1, e):
         """
@@ -326,7 +349,9 @@ class OSHUN1D:
         f0_star = self.lb(None, f0_star, self.dt)
 
         # implicit solve for E
-        if self.e_solver == "oshun":  # implicit E, explicit f0, f1 with this Taylor expansion of J method
+        if (
+            self.e_solver == "oshun"
+        ):  # implicit E, explicit f0, f1 with this Taylor expansion of J method
             # taylor expansion of j(E) method from Tzoufras 2013
             new_e = self.implicit_e_solve(Z, ni, f0_star, f10_star, y["e"])
             # push e
@@ -334,8 +359,12 @@ class OSHUN1D:
             # solve f10 coll
             new_f10 = self.ei(Z=Z, ni=ni, f0=f0_star, f10=new_f10, dt=self.dt)
 
-        elif self.e_solver == "edfdv-ampere-implicit":  # implicit E, f0, f1 using a nonlinear iterative inversion
-            new_f0, new_f10, new_e = self.implicit_e_f0_f1_solve(f0=f0_star, f1=f10_star, e=y["e"])
+        elif (
+            self.e_solver == "edfdv-ampere-implicit"
+        ):  # implicit E, f0, f1 using a nonlinear iterative inversion
+            new_f0, new_f10, new_e = self.implicit_e_f0_f1_solve(
+                f0=f0_star, f1=f10_star, e=y["e"]
+            )
 
         elif self.e_solver == "ampere":
             new_e = y["e"] + self.dt * self.ampere_coeff * self.calc_j(f10_star)
@@ -347,4 +376,12 @@ class OSHUN1D:
         else:
             raise NotImplementedError
 
-        return {"f0": new_f0, "f10": new_f10, "f11": y["f11"], "e": new_e, "b": y["b"], "Z": y["Z"], "ni": y["ni"]}
+        return {
+            "f0": new_f0,
+            "f10": new_f10,
+            "f11": y["f11"],
+            "e": new_e,
+            "b": y["b"],
+            "Z": y["Z"],
+            "ni": y["ni"],
+        }

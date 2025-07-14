@@ -63,18 +63,29 @@ def train_loop():
             rng.shuffle(k0s)
             rng.shuffle(a0s)
             epoch_loss = 0.0
-            for sim, (nuee, k0, a0) in (pbar := tqdm(enumerate(product(nus, k0s, a0s)))):
+            for sim, (nuee, k0, a0) in (
+                pbar := tqdm(enumerate(product(nus, k0s, a0s)))
+            ):
                 with open("./damping.yaml", "r") as file:
                     defaults = yaml.safe_load(file)
 
-                mod_defaults = _modify_defaults_(defaults, float(k0), float(a0), float(nuee))
+                mod_defaults = _modify_defaults_(
+                    defaults, float(k0), float(a0), float(nuee)
+                )
                 locs = {"$k_0$": k0, "$a_0$": a0, r"$\nu_{ee}$": nuee}
-                actual_nk1 = xr.DataArray(fks["n-(k_x)"].loc[locs].data[:, 1], coords=(("t", fks.coords["t"].data),))
-                with mlflow.start_run(run_name=f"{epoch=}-{sim=}", nested=True) as mlflow_run:
+                actual_nk1 = xr.DataArray(
+                    fks["n-(k_x)"].loc[locs].data[:, 1],
+                    coords=(("t", fks.coords["t"].data),),
+                )
+                with mlflow.start_run(
+                    run_name=f"{epoch=}-{sim=}", nested=True
+                ) as mlflow_run:
                     mod_defaults = helpers.get_derived_quantities(mod_defaults)
                     misc.log_params(mod_defaults)
 
-                    mod_defaults["grid"] = helpers.get_solver_quantities(mod_defaults["grid"])
+                    mod_defaults["grid"] = helpers.get_solver_quantities(
+                        mod_defaults["grid"]
+                    )
                     mod_defaults = helpers.get_save_quantities(mod_defaults)
 
                     with tempfile.TemporaryDirectory() as td:
@@ -96,24 +107,41 @@ def train_loop():
                                 y0=state,
                                 args=args,
                                 saveat=SaveAt(
-                                    ts=mod_defaults["save"]["t"]["ax"], fn=mod_defaults["save"]["func"]["callable"]
+                                    ts=mod_defaults["save"]["t"]["ax"],
+                                    fn=mod_defaults["save"]["func"]["callable"],
                                 ),
                             )
                             nk1 = (
-                                jnp.abs(jnp.fft.fft(results.ys["x"]["electron"]["n"], axis=1)[:, 1])
+                                jnp.abs(
+                                    jnp.fft.fft(
+                                        results.ys["x"]["electron"]["n"], axis=1
+                                    )[:, 1]
+                                )
                                 * 2.0
                                 / mod_defaults["grid"]["nx"]
                             )
-                            return jnp.mean(jnp.square((actual_nk1.data - nk1) / np.amax(actual_nk1.data))), results
+                            return (
+                                jnp.mean(
+                                    jnp.square(
+                                        (actual_nk1.data - nk1)
+                                        / np.amax(actual_nk1.data)
+                                    )
+                                ),
+                                results,
+                            )
 
                         vg_func = eqx.filter_value_and_grad(loss, has_aux=True)
-                        (loss_val, results), grad = eqx.filter_jit(vg_func)(trapping_models)
+                        (loss_val, results), grad = eqx.filter_jit(vg_func)(
+                            trapping_models
+                        )
                         mlflow.log_metrics({"run_time": round(time.time() - t0, 4)})
 
                         t0 = time.time()
                         helpers.post_process(results, mod_defaults, td)
                         plotters.mva(actual_nk1, mod_defaults, results, td)
-                        mlflow.log_metrics({"postprocess_time": round(time.time() - t0, 4)})
+                        mlflow.log_metrics(
+                            {"postprocess_time": round(time.time() - t0, 4)}
+                        )
                         # log artifacts
                         mlflow.log_artifacts(td)
 
@@ -122,7 +150,9 @@ def train_loop():
                 loss_val = float(loss_val)
                 mlflow.log_metrics({"run_loss": loss_val}, step=sim + epoch * 100)
                 epoch_loss = epoch_loss + loss_val
-                pbar.set_description(f"{loss_val=:.2e}, {epoch_loss=:.2e}, average_loss={epoch_loss / (sim + 1):.2e}")
+                pbar.set_description(
+                    f"{loss_val=:.2e}, {epoch_loss=:.2e}, average_loss={epoch_loss / (sim + 1):.2e}"
+                )
 
             mlflow.log_metrics({"epoch_loss": epoch_loss})
 
@@ -147,7 +177,9 @@ def remote_train_loop():
     rng = np.random.default_rng(420)
 
     train_sims = rng.choice(
-        np.arange(all_sims.shape[0]), int(0.9 * all_sims.shape[0] / batch_size) * batch_size, replace=False
+        np.arange(all_sims.shape[0]),
+        int(0.9 * all_sims.shape[0] / batch_size) * batch_size,
+        replace=False,
     )
     val_sims = np.array(list(set(np.arange(all_sims.shape[0])) - set(train_sims)))
 
@@ -157,23 +189,49 @@ def remote_train_loop():
             epoch_loss = 0.0
             rng.shuffle(train_sims)
             train_batches = all_sims[train_sims].reshape((-1, batch_size, 3))
-            for i_batch, batch in (pbar := tqdm(enumerate(train_batches), total=len(train_batches))):
+            for i_batch, batch in (
+                pbar := tqdm(enumerate(train_batches), total=len(train_batches))
+            ):
                 run_ids, job_done = [], []
                 for sim, (nuee, k0, a0) in enumerate(batch):
                     run_ids, job_done = queue_sim(
-                        fks, nuee, k0, a0, run_ids, job_done, trapping_models, epoch, i_batch, sim, t_or_v="grad"
+                        fks,
+                        nuee,
+                        k0,
+                        a0,
+                        run_ids,
+                        job_done,
+                        trapping_models,
+                        epoch,
+                        i_batch,
+                        sim,
+                        t_or_v="grad",
                     )
                 trapping_models = update_w_and_b(
-                    job_done, run_ids, optimizer, opt_state, eqx.filter(trapping_models, eqx.is_array)
+                    job_done,
+                    run_ids,
+                    optimizer,
+                    opt_state,
+                    eqx.filter(trapping_models, eqx.is_array),
                 )
                 batch_loss = float(
                     np.sum(
-                        np.array([misc.get_this_metric_of_this_run("loss", queued_run_id) for queued_run_id in run_ids])
+                        np.array(
+                            [
+                                misc.get_this_metric_of_this_run("loss", queued_run_id)
+                                for queued_run_id in run_ids
+                            ]
+                        )
                     )
                 )
-                mlflow.log_metrics({"batch_loss": batch_loss}, step=i_batch + epoch * len(train_batches))
+                mlflow.log_metrics(
+                    {"batch_loss": batch_loss},
+                    step=i_batch + epoch * len(train_batches),
+                )
                 epoch_loss = epoch_loss + batch_loss
-                pbar.set_description(f"{batch_loss=:.2e}, {epoch_loss=:.2e}, average_loss={epoch_loss / (sim + 1):.2e}")
+                pbar.set_description(
+                    f"{batch_loss=:.2e}, {epoch_loss=:.2e}, average_loss={epoch_loss / (sim + 1):.2e}"
+                )
 
             mlflow.log_metrics({"epoch_loss": epoch_loss / len(train_sims)}, step=epoch)
 
@@ -181,12 +239,27 @@ def remote_train_loop():
             run_ids, job_done = [], []
             for sim, (nuee, k0, a0) in enumerate(all_sims[val_sims]):
                 run_ids, job_done = queue_sim(
-                    fks, nuee, k0, a0, run_ids, job_done, trapping_models, epoch, 0, sim, t_or_v="val"
+                    fks,
+                    nuee,
+                    k0,
+                    a0,
+                    run_ids,
+                    job_done,
+                    trapping_models,
+                    epoch,
+                    0,
+                    sim,
+                    t_or_v="val",
                 )
             wait_for_jobs(job_done, run_ids)
             val_loss = float(
                 np.average(
-                    np.array([misc.get_this_metric_of_this_run("val_loss", queued_run_id) for queued_run_id in run_ids])
+                    np.array(
+                        [
+                            misc.get_this_metric_of_this_run("val_loss", queued_run_id)
+                            for queued_run_id in run_ids
+                        ]
+                    )
                 )
             )
             mlflow.log_metrics({"val_epoch_loss": val_loss}, step=epoch)
@@ -204,8 +277,12 @@ def update_w_and_b(job_done, run_ids, optimizer, opt_state, w_and_b):
     gradients = []
     with tempfile.TemporaryDirectory() as td:
         for queued_run_id in run_ids:
-            mlflow.artifacts.download_artifacts(run_id=queued_run_id, artifact_path="grads.eqx", dst_path=td)
-            gradients.append(eqx.tree_deserialise_leaves(os.path.join(td, "grads.eqx"), w_and_b))
+            mlflow.artifacts.download_artifacts(
+                run_id=queued_run_id, artifact_path="grads.eqx", dst_path=td
+            )
+            gradients.append(
+                eqx.tree_deserialise_leaves(os.path.join(td, "grads.eqx"), w_and_b)
+            )
 
     gradients = misc.all_reduce_gradients(gradients, len(run_ids))
     updates, opt_state = optimizer.update(gradients, opt_state, w_and_b)
@@ -214,14 +291,20 @@ def update_w_and_b(job_done, run_ids, optimizer, opt_state, w_and_b):
     return w_and_b
 
 
-def queue_sim(fks, nuee, k0, a0, run_ids, job_done, w_and_b, epoch, i_batch, sim, t_or_v="grad"):
+def queue_sim(
+    fks, nuee, k0, a0, run_ids, job_done, w_and_b, epoch, i_batch, sim, t_or_v="grad"
+):
     with open("../../configs/tf-1d/damping.yaml", "r") as file:
         defaults = yaml.safe_load(file)
 
     mod_defaults = _modify_defaults_(defaults, float(k0), float(a0), float(nuee))
     locs = {"$k_0$": k0, "$a_0$": a0, r"$\nu_{ee}$": nuee}
-    actual_nk1 = xr.DataArray(fks["n-(k_x)"].loc[locs].data[:, 1], coords=(("t", fks.coords["t"].data),))
-    with mlflow.start_run(run_name=f"{epoch=}-batch={i_batch}-{sim=}", nested=True) as mlflow_run:
+    actual_nk1 = xr.DataArray(
+        fks["n-(k_x)"].loc[locs].data[:, 1], coords=(("t", fks.coords["t"].data),)
+    )
+    with mlflow.start_run(
+        run_name=f"{epoch=}-batch={i_batch}-{sim=}", nested=True
+    ) as mlflow_run:
         with tempfile.TemporaryDirectory() as td:
             with open(os.path.join(td, "config.yaml"), "w") as fp:
                 yaml.dump(mod_defaults, fp)
@@ -279,18 +362,35 @@ def eval_over_all():
     #     raise ValueError
 
     mlflow.set_experiment(defaults["mlflow"]["experiment"])
-    with mlflow.start_run(run_name="test-all-nl-damping-opt", nested=True) as mlflow_run:
+    with mlflow.start_run(
+        run_name="test-all-nl-damping-opt", nested=True
+    ) as mlflow_run:
         run_ids, job_done = [], []
         for sim in tqdm(test_sim_inds, total=len(test_sim_inds)):
             nuee, k0, a0 = test_sims[sim]
             run_ids, job_done = queue_sim(
-                fks, nuee, k0, a0, run_ids, job_done, trapping_models, 0, 0, sim, t_or_v="val"
+                fks,
+                nuee,
+                k0,
+                a0,
+                run_ids,
+                job_done,
+                trapping_models,
+                0,
+                0,
+                sim,
+                t_or_v="val",
             )
 
         wait_for_jobs(job_done, run_ids)
         val_loss = float(
             np.average(
-                np.array([misc.get_this_metric_of_this_run("val_loss", queued_run_id) for queued_run_id in run_ids])
+                np.array(
+                    [
+                        misc.get_this_metric_of_this_run("val_loss", queued_run_id)
+                        for queued_run_id in run_ids
+                    ]
+                )
             )
         )
         mlflow.log_metrics({"test_loss": val_loss}, step=0)

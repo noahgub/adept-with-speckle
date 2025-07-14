@@ -19,7 +19,9 @@ def _modify_defaults_(defaults, rng, gamma):
     defaults["drivers"]["ex"]["0"]["k0"] = float(rand_k0)
     defaults["physics"]["electron"]["gamma"] = gamma
     if gamma == "kinetic":
-        root = np.real(electrostatic.get_roots_to_electrostatic_dispersion(1.0, 1.0, rand_k0))
+        root = np.real(
+            electrostatic.get_roots_to_electrostatic_dispersion(1.0, 1.0, rand_k0)
+        )
         defaults["mlflow"]["run"] = "kinetic"
     else:
         root = np.sqrt(1.0 + 3.0 * rand_k0**2.0)
@@ -50,7 +52,8 @@ def test_single_resonance(gamma):
 
     kx = (
         np.fft.fftfreq(
-            mod_defaults["save"]["x"]["nx"], d=mod_defaults["save"]["x"]["ax"][2] - mod_defaults["save"]["x"]["ax"][1]
+            mod_defaults["save"]["x"]["nx"],
+            d=mod_defaults["save"]["x"]["ax"][2] - mod_defaults["save"]["x"]["ax"][1],
         )
         * 2.0
         * np.pi
@@ -61,7 +64,9 @@ def test_single_resonance(gamma):
         jnp.fft.ifft(
             1j
             * one_over_kx[None, :]
-            * jnp.fft.fft(result.ys["x"]["ion"]["n"][:, :] - result.ys["x"]["electron"]["n"][:, :])
+            * jnp.fft.fft(
+                result.ys["x"]["ion"]["n"][:, :] - result.ys["x"]["electron"]["n"][:, :]
+            )
         )
     )
     ek1 = np.fft.fft(efs, axis=1)[:, 1]

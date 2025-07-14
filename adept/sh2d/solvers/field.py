@@ -27,13 +27,21 @@ class SpectralPoissonSolver(eqx.Module):
             [
                 jnp.real(
                     jnp.fft.ifft(
-                        1j * self.one_over_kx[:, None] * jnp.fft.fft(self.ion_charge - self.compute_charges(f), axis=0),
+                        1j
+                        * self.one_over_kx[:, None]
+                        * jnp.fft.fft(
+                            self.ion_charge - self.compute_charges(f), axis=0
+                        ),
                         axis=0,
                     )
                 )[..., None],
                 jnp.real(
                     jnp.fft.ifft(
-                        1j * self.one_over_ky[None, :] * jnp.fft.fft(self.ion_charge - self.compute_charges(f), axis=1),
+                        1j
+                        * self.one_over_ky[None, :]
+                        * jnp.fft.fft(
+                            self.ion_charge - self.compute_charges(f), axis=1
+                        ),
                         axis=1,
                     )
                 )[..., None],
@@ -60,9 +68,14 @@ class AmpereSolver(eqx.Module):
             * self.dv
             * jnp.concatenate(
                 [
-                    0.5 * jnp.sum(f[0] * self.v[None, None, :] ** 3.0, axis=2)[..., None],
-                    jnp.sum(jnp.real(f[1]) * self.v[None, None, :] ** 3.0, axis=2)[..., None],
-                    -jnp.sum(jnp.imag(f[1]) * self.v[None, None, :] ** 3.0, axis=2)[..., None],
+                    0.5
+                    * jnp.sum(f[0] * self.v[None, None, :] ** 3.0, axis=2)[..., None],
+                    jnp.sum(jnp.real(f[1]) * self.v[None, None, :] ** 3.0, axis=2)[
+                        ..., None
+                    ],
+                    -jnp.sum(jnp.imag(f[1]) * self.v[None, None, :] ** 3.0, axis=2)[
+                        ..., None
+                    ],
                 ],
                 axis=-1,
             )

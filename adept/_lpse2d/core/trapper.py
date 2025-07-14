@@ -24,11 +24,15 @@ class ParticleTrapper(eqx.Module):
         )
         all_ks = jnp.sqrt(self.kax_sq).flatten()
         self.model_kld = cfg["terms"]["epw"]["trapping"]["kld"]
-        self.wis = jnp.interp(all_ks, table_klds, table_wis, left=0.0, right=0.0).reshape(self.kax_sq.shape)
+        self.wis = jnp.interp(
+            all_ks, table_klds, table_wis, left=0.0, right=0.0
+        ).reshape(self.kax_sq.shape)
         self.norm_kld = (self.model_kld - 0.26) / 0.14
         self.norm_nuee = (jnp.log10(1.0e-7) + 7.0) / -4.0
 
-        this_wr = jnp.interp(self.model_kld, table_klds, table_wrs, left=1.0, right=table_wrs[-1])
+        this_wr = jnp.interp(
+            self.model_kld, table_klds, table_wrs, left=1.0, right=table_wrs[-1]
+        )
         self.vph = this_wr / self.model_kld
         self.fft_norm = cfg["grid"]["nx"] * cfg["grid"]["ny"] / 4.0
         # Make models
@@ -47,6 +51,10 @@ class ParticleTrapper(eqx.Module):
         func_inputs = jnp.stack([norm_e, self.norm_kld, self.norm_nuee], axis=-1)
         growth_rates = 10 ** jnp.squeeze(3 * args["nu_g"](func_inputs))
 
-        return -self.vph * jnp.gradient(jnp.pad(delta, pad_width=1, mode="wrap"), axis=0)[
-            1:-1, 1:-1
-        ] / self.dx + growth_rates * jnp.abs(jnp.fft.ifft2(ek * self.fft_norm * self.wis)) / (1.0 + delta**2.0)
+        return -self.vph * jnp.gradient(
+            jnp.pad(delta, pad_width=1, mode="wrap"), axis=0
+        )[1:-1, 1:-1] / self.dx + growth_rates * jnp.abs(
+            jnp.fft.ifft2(ek * self.fft_norm * self.wis)
+        ) / (
+            1.0 + delta**2.0
+        )

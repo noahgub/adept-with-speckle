@@ -1,0 +1,145 @@
+density:
+  basis: linear
+  gradient scale length: 333.33333um
+  max: 0.28 # 0.3
+  min: 0.2
+  noise:
+    max: 1.0e-09
+    min: 1.0e-10
+    type: uniform
+drivers:
+  E0:
+    delta_omega_max: 0.015
+    lasy_params:
+      wavelength: 351.0e-9            
+      energy: 1.                               
+      focal_length: 1.675                         
+      beam_aperture: [0.25, 0.25] 
+      n_beamlets_x: 64
+      n_beamlets_y: 64         
+      relative_laser_bandwidth: 0.005
+      ssd_phase_modulation_amplitude: [4.,4.]
+      ssd_number_color_cycles: [1.35,1.35] 
+      ssd_transverse_bandwidth_distribution: [1., 1.]
+    envelope:
+      tc: 200.25ps
+      tr: 0.1ps
+      tw: 400ps
+      xc: 50um
+      xr: 0.2um
+      xw: 1000um
+      yc: 50um
+      yr: 0.2um
+      yw: 1000um
+    num_colors: 64
+    shape: speckled
+    params:
+      # bounded_param = a + b * jnp.tanh(unbounded_param)
+      # Lower Bound: a - b
+      # Upper Bound: a + b
+      wavelength:
+        a: 351.0e-9
+        b: 100.0e-9
+        learned: false
+      energy:
+        a: 1.0
+        b: 1.0
+        learned: false
+      focal_length:
+        a: 10.0
+        b: 9.5
+        learned: false
+      beam_aperture:
+        a: 0.5
+        b: 0.45
+        learned: false
+      n_beamlets_x:
+        a: 200.0
+        b: 150.0
+        learned: false
+      n_beamlets_y:
+        a: 200.0
+        b: 150.0
+        learned: false
+      relative_laser_bandwidth:
+        a: 0.005
+        b: 0.004
+        learned: false 
+      ssd_phase_modulation_amplitude: 
+        a: 4.0
+        b: 3.5
+        learned: false
+      ssd_number_color_cycles:
+        a: 1.5
+        b: 1.0
+        learned: false
+      ssd_transverse_bandwidth_distribution:
+        a: 2.0
+        b: 1.5
+        learned: false
+      amplitudes: 
+        init: random # uniform, random
+        learned: false
+        activation: log # linear, log
+      phases:
+        init: random # random, seed-###
+        learned: false
+        seed: 42
+
+grid:
+  boundary_abs_coeff: 1.0e4
+  boundary_width: 3um
+  dt: 0.01ps
+  dx: 30nm
+  low_pass_filter: 0.66
+  tmax: 10.0ps
+  tmin: 0.0ns
+  ymax: 4um
+  ymin: -4um
+
+parsl:
+  provider: local
+  nodes: 128
+
+mlflow:
+  experiment: ngub_opt_I=5e14
+  run: long_baseline
+save:
+  fields:
+    t:
+      dt: 0.2ps
+      tmax: 10.0ps
+      tmin: 0ps
+    x:
+      dx: 52nm
+    y:
+      dy: 52nm
+solver: envelope-2d
+terms:
+  epw:
+    boundary:
+      x: absorbing
+      y: periodic
+    damping:
+      collisions: 1.0
+      landau: true
+    density_gradient: true
+    linear: true
+    source:
+      noise: true
+      tpd: true
+  zero_mask: true
+units:
+  atomic number: 40
+  envelope density: 0.25
+  ionization state: 6
+  laser intensity: 5e+14W/cm^2
+  laser_wavelength: 351nm
+  reference electron temperature: 2000eV
+  reference ion temperature: 1000eV
+opt:
+  learning_rate: 0.01
+  batch_size: 1
+  decay_steps: 100000
+  method: optax
+  metric_time_in_ps: 5.0

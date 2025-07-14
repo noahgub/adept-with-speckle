@@ -46,7 +46,12 @@ def test_absorbing_boundaries():
 
     xax = np.linspace(xmin - dx / 2.0, xmax + dx / 2.0, nx + 2)
 
-    a_old, a, charge, djy = np.zeros_like(xax), np.zeros_like(xax), np.zeros_like(xax)[1:-1], np.zeros_like(xax)
+    a_old, a, charge, djy = (
+        np.zeros_like(xax),
+        np.zeros_like(xax),
+        np.zeros_like(xax)[1:-1],
+        np.zeros_like(xax),
+    )
 
     ey_dict = {
         "a0": 1.0e-4,

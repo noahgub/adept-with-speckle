@@ -26,7 +26,11 @@ class VlasovFieldBase:
         if cfg["solver"]["vdfdx"] == "exponential":
             vdfdx = vlasov.ExponentialSpatialAdvection(cfg)
         else:
-            raise NotImplementedError("v df/dx: <" + cfg["solver"]["vdfdx"] + "> has not yet been implemented in JAX")
+            raise NotImplementedError(
+                "v df/dx: <"
+                + cfg["solver"]["vdfdx"]
+                + "> has not yet been implemented in JAX"
+            )
 
         return vdfdx
 
@@ -40,7 +44,11 @@ class VlasovFieldBase:
         # elif cfg["solver"]["edfdv"] == "semilagrangian":
         #     edfdv = velocity.SemiLagrangian(cfg)
         else:
-            raise NotImplementedError("e df/dv: <" + cfg["solver"]["edfdv"] + "> has not yet been implemented in JAX")
+            raise NotImplementedError(
+                "e df/dv: <"
+                + cfg["solver"]["edfdv"]
+                + "> has not yet been implemented in JAX"
+            )
 
         return edfdv
 
@@ -72,12 +80,16 @@ class ChargeConservingMaxwell(VlasovFieldBase):
 
     def step_vxB_1(self, bz, f, dt):
         fxykvx = jnp.fft.fft(f, axis=2)
-        new_fxykvx = fxykvx * jnp.exp(-1j * dt * self.kvx * self.vy * bz[..., None, None])
+        new_fxykvx = fxykvx * jnp.exp(
+            -1j * dt * self.kvx * self.vy * bz[..., None, None]
+        )
         return jnp.fft.ifft(new_fxykvx, axis=2)
 
     def step_vxB_2(self, bz, f, dt):
         fxykvy = jnp.fft.fft(f, axis=3)
-        new_fxykvy = fxykvy * jnp.exp(1j * dt * self.kvy * self.vx * bz[..., None, None])
+        new_fxykvy = fxykvy * jnp.exp(
+            1j * dt * self.kvy * self.vx * bz[..., None, None]
+        )
         return jnp.fft.ifft(new_fxykvy, axis=3)
 
     def __call__(self, t: float, y: Dict, args: Dict) -> Dict:
@@ -119,4 +131,11 @@ class ChargeConservingMaxwell(VlasovFieldBase):
 
         e1n, e2n = jnp.real(jnp.fft.ifft2(exkp)), jnp.real(jnp.fft.ifft2(eykp))
 
-        return {"electron": f2_xy, "ex": e1n, "ey": e2n, "bz": bzn, "dex": dex, "dey": dey}
+        return {
+            "electron": f2_xy,
+            "ex": e1n,
+            "ey": e2n,
+            "bz": bzn,
+            "dex": dex,
+            "dey": dey,
+        }

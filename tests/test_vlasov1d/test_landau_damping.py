@@ -41,7 +41,10 @@ def _modify_defaults_(defaults, rng, real_or_imag, time, field, edfdv):
 @pytest.mark.parametrize(
     "real_or_imag, time, field, edfdv",
     itertools.product(
-        ["real", "imag"], ["sixth", "leapfrog"], ["poisson", "ampere", "hampere"], ["exponential", "cubic-spline"]
+        ["real", "imag"],
+        ["sixth", "leapfrog"],
+        ["poisson", "ampere", "hampere"],
+        ["exponential", "cubic-spline"],
     ),
 )
 def test_single_resonance(real_or_imag, time, field, edfdv):
@@ -55,7 +58,9 @@ def test_single_resonance(real_or_imag, time, field, edfdv):
 
         # modify config
         rng = np.random.default_rng()
-        mod_defaults, root = _modify_defaults_(defaults, rng, real_or_imag, time, field, edfdv)
+        mod_defaults, root = _modify_defaults_(
+            defaults, rng, real_or_imag, time, field, edfdv
+        )
 
         actual_damping_rate = np.imag(root)
         actual_resonance = np.real(root)
@@ -70,7 +75,10 @@ def test_single_resonance(real_or_imag, time, field, edfdv):
         if real_or_imag == "imag":
             frslc = slice(-100, -50)
             measured_damping_rate = np.mean(
-                np.gradient(ek1_mag[frslc], (result.ts["fields"][1] - result.ts["fields"][0])) / ek1_mag[frslc]
+                np.gradient(
+                    ek1_mag[frslc], (result.ts["fields"][1] - result.ts["fields"][0])
+                )
+                / ek1_mag[frslc]
             )
             print(
                 f"Landau Damping rate check \n"
@@ -78,9 +86,13 @@ def test_single_resonance(real_or_imag, time, field, edfdv):
                 f"actual: {np.round(actual_damping_rate, 5)}, "
             )
 
-            np.testing.assert_almost_equal(measured_damping_rate, actual_damping_rate, decimal=2)
+            np.testing.assert_almost_equal(
+                measured_damping_rate, actual_damping_rate, decimal=2
+            )
         else:
-            env, freq = electrostatic.get_nlfs(ek1, result.ts["fields"][1] - result.ts["fields"][0])
+            env, freq = electrostatic.get_nlfs(
+                ek1, result.ts["fields"][1] - result.ts["fields"][0]
+            )
             frslc = slice(-480, -240)
             print(
                 f"Frequency check \n"
@@ -88,7 +100,9 @@ def test_single_resonance(real_or_imag, time, field, edfdv):
                 f"desired: {np.round(actual_resonance, 5)}, "
             )
             measured_resonance = np.mean(freq[frslc])
-            np.testing.assert_almost_equal(measured_resonance, actual_resonance, decimal=2)
+            np.testing.assert_almost_equal(
+                measured_resonance, actual_resonance, decimal=2
+            )
 
 
 if __name__ == "__main__":

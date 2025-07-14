@@ -30,7 +30,11 @@ class Driver:
         envelope_x = get_envelope(x_wL, x_wR, x_L, x_R, self.xax)
 
         return (
-            envelope_t * envelope_x * jnp.abs(kk) * this_pulse["a0"] * jnp.sin(kk * self.xax - (ww + dw) * current_time)
+            envelope_t
+            * envelope_x
+            * jnp.abs(kk)
+            * this_pulse["a0"]
+            * jnp.sin(kk * self.xax - (ww + dw) * current_time)
         )
 
     def __call__(self, t, args):
@@ -69,14 +73,20 @@ class WaveSolver:
 
         # # 2nd order ABC
         a_left = (self.one_over_const - 2.0 + self.const) * (anew[1] + aold[0])
-        a_left += 2.0 * (self.const - self.one_over_const) * (a[0] + a[2] - anew[0] - aold[1])
+        a_left += (
+            2.0 * (self.const - self.one_over_const) * (a[0] + a[2] - anew[0] - aold[1])
+        )
         a_left -= 4.0 * (self.one_over_const + self.const) * a[1]
         a_left *= coeff
         a_left -= aold[2]
         a_left = jnp.array([a_left])
 
         a_right = (self.one_over_const - 2.0 + self.const) * (anew[-2] + aold[-1])
-        a_right += 2.0 * (self.const - self.one_over_const) * (a[-1] + a[-3] - anew[-1] - aold[-2])
+        a_right += (
+            2.0
+            * (self.const - self.one_over_const)
+            * (a[-1] + a[-3] - anew[-1] - aold[-2])
+        )
         a_right -= 4.0 * (self.one_over_const + self.const) * a[-2]
         a_right *= coeff
         a_right -= aold[-3]
@@ -88,7 +98,13 @@ class WaveSolver:
 
         return jnp.concatenate([a_left, anew, a_right])
 
-    def __call__(self, a: jnp.ndarray, aold: jnp.ndarray, djy_array: jnp.ndarray, electron_charge: jnp.ndarray):
+    def __call__(
+        self,
+        a: jnp.ndarray,
+        aold: jnp.ndarray,
+        djy_array: jnp.ndarray,
+        electron_charge: jnp.ndarray,
+    ):
         if self.c > 0:
             d2dx2 = (a[:-2] - 2.0 * a[1:-1] + a[2:]) / self.dx**2.0
             # padded_a = jnp.concatenate([a[-1:], a, a[:1]])
@@ -96,7 +112,8 @@ class WaveSolver:
             anew = (
                 2.0 * a[1:-1]
                 - aold[1:-1]
-                + self.dt**2.0 * (self.c_sq * d2dx2 - electron_charge * a[1:-1] + djy_array[1:-1])
+                + self.dt**2.0
+                * (self.c_sq * d2dx2 - electron_charge * a[1:-1] + djy_array[1:-1])
             )
             # anew = 2.0 * a - aold + self.dt**2.0 * (self.c_sq * d2dx2 - electron_charge * a + djy_array)
             return {"a": self.apply_2nd_order_abc(aold, a, anew), "prev_a": a}
@@ -115,7 +132,13 @@ class SpectralPoissonSolver:
         return jnp.sum(jnp.sum(f, axis=2), axis=1) * self.dv * self.dv
 
     def __call__(self, f: jnp.ndarray, prev_ex: jnp.ndarray, dt: jnp.float64):
-        return jnp.real(jnp.fft.ifft(1j * self.one_over_kx * jnp.fft.fft(self.ion_charge - self.compute_charges(f))))
+        return jnp.real(
+            jnp.fft.ifft(
+                1j
+                * self.one_over_kx
+                * jnp.fft.fft(self.ion_charge - self.compute_charges(f))
+            )
+        )
 
 
 class AmpereSolver:
@@ -142,7 +165,10 @@ class HampereSolver:
         prev_ek = jnp.fft.fft(prev_ex, axis=0)
         fk = jnp.fft.fft(f, axis=0)
         new_ek = (
-            prev_ek + self.one_over_ikx * jnp.sum(fk * (jnp.exp(-1j * self.kx * dt * self.vx) - 1), axis=1) * self.dv
+            prev_ek
+            + self.one_over_ikx
+            * jnp.sum(fk * (jnp.exp(-1j * self.kx * dt * self.vx) - 1), axis=1)
+            * self.dv
         )
 
         return jnp.real(jnp.fft.ifft(new_ek))
@@ -154,7 +180,9 @@ class ElectricFieldSolver:
 
         if cfg["terms"]["field"] == "poisson":
             self.es_field_solver = SpectralPoissonSolver(
-                ion_charge=cfg["grid"]["ion_charge"], one_over_kx=cfg["grid"]["one_over_kx"], dv=cfg["grid"]["dv"]
+                ion_charge=cfg["grid"]["ion_charge"],
+                one_over_kx=cfg["grid"]["one_over_kx"],
+                dv=cfg["grid"]["dv"],
             )
             self.hampere = False
         elif cfg["terms"]["field"] == "ampere":
@@ -162,18 +190,28 @@ class ElectricFieldSolver:
                 self.es_field_solver = AmpereSolver(cfg)
                 self.hampere = False
             else:
-                raise NotImplementedError(f"ampere + {cfg['terms']['time']} has not yet been implemented")
+                raise NotImplementedError(
+                    f"ampere + {cfg['terms']['time']} has not yet been implemented"
+                )
         elif cfg["terms"]["field"] == "hampere":
             if cfg["terms"]["time"] == "leapfrog":
                 self.es_field_solver = HampereSolver(cfg)
                 self.hampere = True
             else:
-                raise NotImplementedError(f"ampere + {cfg['terms']['time']} has not yet been implemented")
+                raise NotImplementedError(
+                    f"ampere + {cfg['terms']['time']} has not yet been implemented"
+                )
         else:
-            raise NotImplementedError("Field Solver: <" + cfg["solver"]["field"] + "> has not yet been implemented")
+            raise NotImplementedError(
+                "Field Solver: <"
+                + cfg["solver"]["field"]
+                + "> has not yet been implemented"
+            )
         self.dx = cfg["grid"]["dx"]
 
-    def __call__(self, f: jnp.ndarray, a: jnp.ndarray, prev_ex: jnp.ndarray, dt: jnp.float64):
+    def __call__(
+        self, f: jnp.ndarray, a: jnp.ndarray, prev_ex: jnp.ndarray, dt: jnp.float64
+    ):
         """
         This returns the total electrostatic field that is used in the Vlasov equation
         The total field is a sum of the ponderomotive force from `E_y`, the driver field, and the

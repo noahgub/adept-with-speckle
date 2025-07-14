@@ -29,10 +29,10 @@ class SplitStep:
         self.one_over_ksq = cfg["grid"]["one_over_ksq"]
         self.zero_mask = cfg["grid"]["zero_mask"]
         self.low_pass_filter = cfg["grid"]["low_pass_filter"]
-        
+
         self.nu_coll = cfg["units"]["derived"]["nu_coll"]
-        
-        self.laser_type = cfg["drivers"]["E0"]["laser_type"]
+
+        self.shape = cfg["drivers"]["E0"]["shape"]
 
     def _unpack_y_(self, y: Dict[str, Array]) -> Dict[str, Array]:
         new_y = {}
@@ -43,7 +43,9 @@ class SplitStep:
                 new_y[k] = y[k].view(jnp.float64)
         return new_y
 
-    def _pack_y_(self, y: Dict[str, Array], new_y: Dict[str, Array]) -> tuple[Dict[str, Array], Dict[str, Array]]:
+    def _pack_y_(
+        self, y: Dict[str, Array], new_y: Dict[str, Array]
+    ) -> tuple[Dict[str, Array], Dict[str, Array]]:
         for k in y.keys():
             y[k] = y[k].view(jnp.float64)
             new_y[k] = new_y[k].view(jnp.float64)
@@ -60,12 +62,10 @@ class SplitStep:
                 t,
             )
 
-            if self.laser_type == "plane_wave":
-                y["E0"] = t_coeff * self.light.laser_update(t, y, driver_args["E0"])
-            elif self.laser_type == "speckled":
+            if self.shape == "speckled":
                 y["E0"] = t_coeff * self.light.lasy_update(t, y, driver_args["E0"])
             else:
-                raise NotImplementedError (f"Laser type -- {self.laser_type} -- not implemented")
+                y["E0"] = t_coeff * self.light.laser_update(t, y, driver_args["E0"])
 
         # if self.cfg["terms"]["light"]["update"]:
         # y["E0"] = y["E0"] + self.dt * jnp.real(k1_E0)
@@ -87,7 +87,9 @@ class SplitStep:
         )
 
         return jnp.fft.ifft2(
-            jnp.fft.fft2(epw) * jnp.exp(-(gammaLandauEpw + self.nu_coll) * self.dt) * self.low_pass_filter
+            jnp.fft.fft2(epw)
+            * jnp.exp(-(gammaLandauEpw + self.nu_coll) * self.dt)
+            * self.low_pass_filter
         )
 
     def __call__(self, t, y, args):
@@ -99,7 +101,7 @@ class SplitStep:
 
         # split step
         new_y = self.light_split_step(t, new_y, args["drivers"])
-        
+
         if "E2" in args["drivers"]:
             new_y["epw"] += self.dt * self.epw.driver(args["drivers"]["E2"], t)
         new_y["epw"] = self.epw(t, new_y, args)
