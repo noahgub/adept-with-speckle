@@ -181,7 +181,12 @@ class ergoExo:
 
     """
 
-    def __init__(self, mlflow_run_id: str = None, mlflow_nested: bool = None, parent_run_id: str = None) -> None:
+    def __init__(
+        self,
+        mlflow_run_id: str = None,
+        mlflow_nested: bool = None,
+        parent_run_id: str = None,
+    ) -> None:
 
         self.mlflow_run_id = mlflow_run_id
         # if mlflow_run_id is not None:
@@ -232,7 +237,9 @@ class ergoExo:
             if self.mlflow_run_id is None:
                 mlflow.set_experiment(cfg["mlflow"]["experiment"])
                 with mlflow.start_run(
-                    run_name=cfg["mlflow"]["run"], nested=self.mlflow_nested, parent_run_id=self.parent_run_id
+                    run_name=cfg["mlflow"]["run"],
+                    nested=self.mlflow_nested,
+                    parent_run_id=self.parent_run_id,
                 ) as mlflow_run:
                     modules = self._setup_(cfg, td, adept_module)
                     robust_log_artifacts(td)  # logs the temporary directory to mlflow
@@ -242,7 +249,9 @@ class ergoExo:
                 from adept.utils import get_cfg
 
                 with mlflow.start_run(
-                    run_id=self.mlflow_run_id, nested=self.mlflow_nested, parent_run_id=self.parent_run_id
+                    run_id=self.mlflow_run_id,
+                    nested=self.mlflow_nested,
+                    parent_run_id=self.parent_run_id,
                 ) as mlflow_run:
                     # with tempfile.TemporaryDirectory(dir=self.base_tempdir) as temp_path:
                     # cfg = get_cfg(artifact_uri=mlflow_run.info.artifact_uri, temp_path=temp_path)
@@ -284,11 +293,15 @@ class ergoExo:
         elif cfg["solver"] == "vfp-1d":
             from adept.vfp1d.base import BaseVFP1D as this_module
         else:
-            raise NotImplementedError("This solver approach has not been implemented yet")
+            raise NotImplementedError(
+                "This solver approach has not been implemented yet"
+            )
 
         return this_module(cfg)
 
-    def _setup_(self, cfg: Dict, td: str, adept_module: ADEPTModule = None, log: bool = True) -> Dict[str, Module]:
+    def _setup_(
+        self, cfg: Dict, td: str, adept_module: ADEPTModule = None, log: bool = True
+    ) -> Dict[str, Module]:
         from adept.utils import log_params
 
         if adept_module is None:
@@ -302,7 +315,9 @@ class ergoExo:
                 yaml.dump(self.adept_module.cfg, fi)
 
         # dump units
-        quants_dict = self.adept_module.write_units()  # writes the units to the temporary directory
+        quants_dict = (
+            self.adept_module.write_units()
+        )  # writes the units to the temporary directory
         if log:
             with open(os.path.join(td, "units.yaml"), "w") as fi:
                 yaml.dump(quants_dict, fi)
@@ -329,7 +344,9 @@ class ergoExo:
 
         return modules
 
-    def __call__(self, modules: Dict = None, args: Dict = None, export=True) -> Tuple[Solution, Dict, str]:
+    def __call__(
+        self, modules: Dict = None, args: Dict = None, export=True
+    ) -> Tuple[Solution, Dict, str]:
         """
         This function is the main entry point for running a simulation. It takes a configuration dictionary and returns a
         ``diffrax.Solution`` object and a dictionary of datasets. It calls the ``self.adept_module``'s ``__call__`` function.
@@ -350,11 +367,15 @@ class ergoExo:
         assert self.ran_setup, "You must run self.setup() before running the simulation"
 
         with mlflow.start_run(
-            run_id=self.mlflow_run_id, nested=self.mlflow_nested, log_system_metrics=True
+            run_id=self.mlflow_run_id,
+            nested=self.mlflow_nested,
+            log_system_metrics=True,
         ) as mlflow_run:
             t0 = time.time()
             run_output = filter_jit(self.adept_module.__call__)(modules, args)
-            mlflow.log_metrics({"run_time": round(time.time() - t0, 4)})  # logs the run time to mlflow
+            mlflow.log_metrics(
+                {"run_time": round(time.time() - t0, 4)}
+            )  # logs the run time to mlflow
 
             t0 = time.time()
             with tempfile.TemporaryDirectory(dir=self.base_tempdir) as td:
@@ -388,13 +409,40 @@ class ergoExo:
         """
         assert self.ran_setup, "You must run self.setup() before running the simulation"
         with mlflow.start_run(
-            run_id=self.mlflow_run_id, nested=self.mlflow_nested, log_system_metrics=True
+            run_id=self.mlflow_run_id,
+            nested=self.mlflow_nested,
+            log_system_metrics=True,
         ) as mlflow_run:
             t0 = time.time()
             (val, run_output), grad = filter_jit(self.adept_module.vg)(modules, args)
             flattened_grad, _ = jax.flatten_util.ravel_pytree(grad)
-            mlflow.log_metrics({"run_time": round(time.time() - t0, 4)})  # logs the run time to mlflow
-            mlflow.log_metrics({"val": float(val), "l2-grad": float(np.linalg.norm(flattened_grad))})
+
+            mlflow.log_metrics(
+                {"run_time": round(time.time() - t0, 4)}
+            )  # logs the run time to mlflow
+            mlflow.log_metrics(
+                {"val": float(val), "l2-grad": float(np.linalg.norm(flattened_grad))}
+            )
+
+            # Log the values of the differentiable modules to mlflow
+            # laser_driver_object = modules['laser']
+            # static_laser_driver_object = args['static_modules']['laser']
+            # model_cfg = static_laser_driver_object.model_cfg # Get from static modules so not None
+            # metrics_to_log = {}
+            # for param_name, param_config in model_cfg.items():
+            #     if param_config.get('learned'):
+            #         unbdd_value_to_log = getattr(laser_driver_object, param_name)
+            #         if unbdd_value_to_log is None:
+            #             break
+            #         bdd_value_to_log = model_cfg[param_name]['a'] + model_cfg[param_name]['b'] * jnp.tanh(unbdd_value_to_log)
+            #         try:
+            #             for i in range(len(bdd_value_to_log)): # for arrays, logs each element seperately
+            #                 metrics_to_log[f"Unbounded {param_name}_{i}"] = float(unbdd_value_to_log[i])
+            #                 metrics_to_log[f"Bounded {param_name}_{i}"] = float(bdd_value_to_log[i])
+            #         except TypeError:
+            #             metrics_to_log[f"Unbounded {param_name}"] = float(unbdd_value_to_log) # log scalars directly
+            #             metrics_to_log[f"Bounded {param_name}"] = float(bdd_value_to_log)
+            # mlflow.log_metrics(metrics_to_log)
 
             t0 = time.time()
             with tempfile.TemporaryDirectory(dir=self.base_tempdir) as td:
@@ -404,6 +452,7 @@ class ergoExo:
                 if "metrics" in post_processing_output:
                     mlflow.log_metrics(post_processing_output["metrics"])
             mlflow.log_metrics({"postprocess_time": round(time.time() - t0, 4)})
+            # return run_output, post_processing_output, self.mlflow_run_id
             return val, grad, (run_output, post_processing_output, self.mlflow_run_id)
 
     def _log_flops_(_run_: Callable, models: Dict, state: Dict, args: Dict, tqs):
@@ -422,4 +471,6 @@ class ergoExo:
         client = jax.lib.xla_bridge.get_backend()
         analysis = jax.lib.xla_client._xla.hlo_module_cost_analysis(client, module)
         flops_sum = analysis["flops"]
-        mlflow.log_metrics({"total GigaFLOP": flops_sum / 1e9})  # logs the flops to mlflow
+        mlflow.log_metrics(
+            {"total GigaFLOP": flops_sum / 1e9}
+        )  # logs the flops to mlflow

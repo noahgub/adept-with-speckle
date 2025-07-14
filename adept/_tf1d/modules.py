@@ -30,13 +30,19 @@ class BaseTwoFluid1D(ADEPTModule):
         datasets = {}
         if any(x in ["x", "kx"] for x in self.cfg["save"]):
             if "x" in self.cfg["save"].keys():
-                datasets["x"] = save_arrays(solver_result["solver result"], td, self.cfg, label="x")
+                datasets["x"] = save_arrays(
+                    solver_result["solver result"], td, self.cfg, label="x"
+                )
                 plot_xrs("x", td, datasets["x"])
             if "kx" in self.cfg["save"].keys():
-                datasets["kx"] = save_arrays(solver_result["solver result"], td, self.cfg, label="kx")
+                datasets["kx"] = save_arrays(
+                    solver_result["solver result"], td, self.cfg, label="kx"
+                )
                 plot_xrs("kx", td, datasets["kx"])
         else:
-            datasets["full"] = save_arrays(solver_result["solver result"], td, self.cfg, label=None)
+            datasets["full"] = save_arrays(
+                solver_result["solver result"], td, self.cfg, label=None
+            )
             plot_xrs("x", td, datasets["full"])
 
         return datasets
@@ -53,7 +59,9 @@ class BaseTwoFluid1D(ADEPTModule):
         n0 = _Q(self.cfg["units"]["normalizing_density"]).to("1/cc")
         T0 = _Q(self.cfg["units"]["normalizing_temperature"]).to("eV")
 
-        wp0 = np.sqrt(n0 * self.ureg.e**2.0 / (self.ureg.m_e * self.ureg.epsilon_0)).to("rad/s")
+        wp0 = np.sqrt(
+            n0 * self.ureg.e**2.0 / (self.ureg.m_e * self.ureg.epsilon_0)
+        ).to("rad/s")
         tp0 = (1 / wp0).to("fs")
 
         v0 = np.sqrt(2.0 * T0 / self.ureg.m_e).to("m/s")
@@ -61,9 +69,13 @@ class BaseTwoFluid1D(ADEPTModule):
         c_light = _Q(1.0 * self.ureg.c).to("m/s") / v0
         beta = (v0 / self.ureg.c).to("dimensionless")
 
-        box_length = ((self.cfg["grid"]["xmax"] - self.cfg["grid"]["xmin"]) * x0).to("microns")
+        box_length = ((self.cfg["grid"]["xmax"] - self.cfg["grid"]["xmin"]) * x0).to(
+            "microns"
+        )
         if "ymax" in self.cfg["grid"].keys():
-            box_width = ((self.cfg["grid"]["ymax"] - self.cfg["grid"]["ymin"]) * x0).to("microns")
+            box_width = ((self.cfg["grid"]["ymax"] - self.cfg["grid"]["ymin"]) * x0).to(
+                "microns"
+            )
         else:
             box_width = "inf"
         sim_duration = (self.cfg["grid"]["tmax"] * tp0).to("ps")
@@ -141,7 +153,9 @@ class BaseTwoFluid1D(ADEPTModule):
             **cfg_grid,
             **{
                 "x": jnp.linspace(
-                    cfg_grid["xmin"] + cfg_grid["dx"] / 2, cfg_grid["xmax"] - cfg_grid["dx"] / 2, cfg_grid["nx"]
+                    cfg_grid["xmin"] + cfg_grid["dx"] / 2,
+                    cfg_grid["xmax"] - cfg_grid["dx"] / 2,
+                    cfg_grid["nx"],
                 ),
                 "t": jnp.linspace(0, cfg_grid["tmax"], cfg_grid["nt"]),
                 "kx": jnp.fft.fftfreq(cfg_grid["nx"], d=cfg_grid["dx"]) * 2.0 * np.pi,
@@ -187,24 +201,39 @@ class BaseTwoFluid1D(ADEPTModule):
         """
         if any(x in ["x", "kx"] for x in self.cfg["save"]):
             if "x" in self.cfg["save"].keys():
-                dx = (self.cfg["save"]["x"]["xmax"] - self.cfg["save"]["x"]["xmin"]) / self.cfg["save"]["x"]["nx"]
+                dx = (
+                    self.cfg["save"]["x"]["xmax"] - self.cfg["save"]["x"]["xmin"]
+                ) / self.cfg["save"]["x"]["nx"]
                 self.cfg["save"]["x"]["ax"] = jnp.linspace(
                     self.cfg["save"]["x"]["xmin"] + dx / 2.0,
                     self.cfg["save"]["x"]["xmax"] - dx / 2.0,
                     self.cfg["save"]["x"]["nx"],
                 )
 
-                save_x = partial(jnp.interp, self.cfg["save"]["x"]["ax"], self.cfg["grid"]["x"])
+                save_x = partial(
+                    jnp.interp, self.cfg["save"]["x"]["ax"], self.cfg["grid"]["x"]
+                )
 
             if "kx" in self.cfg["save"].keys():
                 self.cfg["save"]["kx"]["ax"] = jnp.linspace(
-                    self.cfg["save"]["kx"]["kxmin"], self.cfg["save"]["kx"]["kxmax"], self.cfg["save"]["kx"]["nkx"]
+                    self.cfg["save"]["kx"]["kxmin"],
+                    self.cfg["save"]["kx"]["kxmax"],
+                    self.cfg["save"]["kx"]["nkx"],
                 )
 
                 def save_kx(field):
-                    complex_field = jnp.fft.rfft(field, axis=0) * 2.0 / self.cfg["grid"]["nx"]
-                    interped_field = jnp.interp(self.cfg["save"]["kx"]["ax"], self.cfg["grid"]["kxr"], complex_field)
-                    return {"mag": jnp.abs(interped_field), "ang": jnp.angle(interped_field)}
+                    complex_field = (
+                        jnp.fft.rfft(field, axis=0) * 2.0 / self.cfg["grid"]["nx"]
+                    )
+                    interped_field = jnp.interp(
+                        self.cfg["save"]["kx"]["ax"],
+                        self.cfg["grid"]["kxr"],
+                        complex_field,
+                    )
+                    return {
+                        "mag": jnp.abs(interped_field),
+                        "ang": jnp.angle(interped_field),
+                    }
 
             def save_func(t, y, args):
                 save_dict = {}
@@ -235,10 +264,14 @@ class BaseTwoFluid1D(ADEPTModule):
         }
         save_f = self.get_save_func()
         self.cfg["save"]["t"]["ax"] = jnp.linspace(
-            self.cfg["save"]["t"]["tmin"], self.cfg["save"]["t"]["tmax"], self.cfg["save"]["t"]["nt"]
+            self.cfg["save"]["t"]["tmin"],
+            self.cfg["save"]["t"]["tmax"],
+            self.cfg["save"]["t"]["nt"],
         )
         self.diffeqsolve_quants = dict(
-            terms=ODETerm(VF(self.cfg)), solver=Tsit5(), saveat=dict(ts=self.cfg["save"]["t"]["ax"], fn=save_f)
+            terms=ODETerm(VF(self.cfg)),
+            solver=Tsit5(),
+            saveat=dict(ts=self.cfg["save"]["t"]["ax"], fn=save_f),
         )
 
     def __call__(self, trainable_modules: Dict, args: Dict) -> Dict:

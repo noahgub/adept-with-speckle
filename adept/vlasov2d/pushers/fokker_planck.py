@@ -26,7 +26,9 @@ class Collisions(eqx.Module):
         else:
             raise NotImplementedError
 
-    def step_vx(self, nu_fp: jnp.float64, f: jnp.ndarray, dt: jnp.float64) -> jnp.ndarray:
+    def step_vx(
+        self, nu_fp: jnp.float64, f: jnp.ndarray, dt: jnp.float64
+    ) -> jnp.ndarray:
         """
         Perform vy linearized FP timestep
 
@@ -38,9 +40,15 @@ class Collisions(eqx.Module):
         # get LB or DG operator
         cee_a, cee_b, cee_c = self.fp.get_vx_operator(nu=nu_fp, f_xv=f, dt=dt)
         # make it the right shape
-        cee_a = jnp.transpose(cee_a, axes=(0, 1, 3, 2)).reshape(-1, self.cfg["grid"]["nvx"])
-        cee_b = jnp.transpose(cee_b, axes=(0, 1, 3, 2)).reshape(-1, self.cfg["grid"]["nvx"])
-        cee_c = jnp.transpose(cee_c, axes=(0, 1, 3, 2)).reshape(-1, self.cfg["grid"]["nvx"])
+        cee_a = jnp.transpose(cee_a, axes=(0, 1, 3, 2)).reshape(
+            -1, self.cfg["grid"]["nvx"]
+        )
+        cee_b = jnp.transpose(cee_b, axes=(0, 1, 3, 2)).reshape(
+            -1, self.cfg["grid"]["nvx"]
+        )
+        cee_c = jnp.transpose(cee_c, axes=(0, 1, 3, 2)).reshape(
+            -1, self.cfg["grid"]["nvx"]
+        )
         f = jnp.transpose(f, axes=(0, 1, 3, 2)).reshape(-1, self.cfg["grid"]["nvx"])
 
         # solve it
@@ -48,14 +56,21 @@ class Collisions(eqx.Module):
 
         # shift back to x, y, vx, vy.
         # first reshape
-        f = f.reshape(self.cfg["grid"]["nx"], self.cfg["grid"]["ny"], self.cfg["grid"]["nvy"], self.cfg["grid"]["nvx"])
+        f = f.reshape(
+            self.cfg["grid"]["nx"],
+            self.cfg["grid"]["ny"],
+            self.cfg["grid"]["nvy"],
+            self.cfg["grid"]["nvx"],
+        )
         # then transpose
         # NB - Remember that the new axis 3, the one used here, was the old 2. So this is actually putting it back
         # together
         f = jnp.transpose(f, axes=(0, 1, 3, 2))
         return f
 
-    def step_vy(self, nu_fp: jnp.float64, f: jnp.ndarray, dt: jnp.float64) -> jnp.ndarray:
+    def step_vy(
+        self, nu_fp: jnp.float64, f: jnp.ndarray, dt: jnp.float64
+    ) -> jnp.ndarray:
         """
         Perform vy linearized FP timestep
 
@@ -73,12 +88,17 @@ class Collisions(eqx.Module):
         f = f.reshape(-1, self.cfg["grid"]["nvy"])
         # Solve over all x, y, vx
         f = self.td_solver(cee_a, cee_b, cee_c, f).reshape(
-            self.cfg["grid"]["nx"], self.cfg["grid"]["ny"], self.cfg["grid"]["nvx"], self.cfg["grid"]["nvy"]
+            self.cfg["grid"]["nx"],
+            self.cfg["grid"]["ny"],
+            self.cfg["grid"]["nvx"],
+            self.cfg["grid"]["nvy"],
         )
 
         return f
 
-    def __call__(self, nu_fp: jnp.float64, nu_K: jnp.float64, f: jnp.ndarray, dt: jnp.float64) -> jnp.ndarray:
+    def __call__(
+        self, nu_fp: jnp.float64, nu_K: jnp.float64, f: jnp.ndarray, dt: jnp.float64
+    ) -> jnp.ndarray:
         if np.any(self.cfg["grid"]["nu_prof"] > 0.0):
             # Solve x * y * vy independent linear systems for f(vx)
             f = self.step_vx(nu_fp, f, dt)
@@ -86,7 +106,9 @@ class Collisions(eqx.Module):
             # Solve x * y * vx independent linear systems for f(vy)
             f = self.step_vy(nu_fp, f, dt)
 
-        if (np.any(self.cfg["grid"]["kr_prof"] > 0.0)) and (np.any(self.cfg["grid"]["kt_prof"] > 0.0)):
+        if (np.any(self.cfg["grid"]["kr_prof"] > 0.0)) and (
+            np.any(self.cfg["grid"]["kt_prof"] > 0.0)
+        ):
             f = self.krook(nu_K, f, dt)
         return f
 
@@ -117,7 +139,12 @@ class LenardBernstein(eqx.Module):
         self.vy = self.cfg["grid"]["vy"]
         self.dvy = self.cfg["grid"]["dvy"]
         self.ones = jnp.ones(
-            (self.cfg["grid"]["nx"], self.cfg["grid"]["ny"], self.cfg["grid"]["nvx"], self.cfg["grid"]["nvy"])
+            (
+                self.cfg["grid"]["nx"],
+                self.cfg["grid"]["ny"],
+                self.cfg["grid"]["nvx"],
+                self.cfg["grid"]["nvy"],
+            )
         )
 
     def vx_moment(self, f):
@@ -141,13 +168,19 @@ class LenardBernstein(eqx.Module):
         a = (
             nu
             * dt
-            * (-v0t_sq[:, :, None, :] / self.dvx**2.0 + jnp.roll(self.vx, 1)[None, None, :, None] / 2 / self.dvx)
+            * (
+                -v0t_sq[:, :, None, :] / self.dvx**2.0
+                + jnp.roll(self.vx, 1)[None, None, :, None] / 2 / self.dvx
+            )
         )
         b = 1.0 + nu * dt * self.ones * (2.0 * v0t_sq[:, :, None, :] / self.dvx**2.0)
         c = (
             nu
             * dt
-            * (-v0t_sq[:, :, None, :] / self.dvx**2.0 - jnp.roll(self.vx, -1)[None, None, :, None] / 2 / self.dvx)
+            * (
+                -v0t_sq[:, :, None, :] / self.dvx**2.0
+                - jnp.roll(self.vx, -1)[None, None, :, None] / 2 / self.dvx
+            )
         )
         return a, b, c
 
@@ -166,13 +199,19 @@ class LenardBernstein(eqx.Module):
         a = (
             nu
             * dt
-            * (-v0t_sq[:, :, :, None] / self.dvy**2.0 + jnp.roll(self.vy, 1)[None, None, None, :] / 2.0 / self.dvy)
+            * (
+                -v0t_sq[:, :, :, None] / self.dvy**2.0
+                + jnp.roll(self.vy, 1)[None, None, None, :] / 2.0 / self.dvy
+            )
         )
         b = 1.0 + nu * dt * self.ones * (2.0 * v0t_sq[:, :, None, :] / self.dvy**2.0)
         c = (
             nu
             * dt
-            * (-v0t_sq[:, :, :, None] / self.dvy**2.0 - jnp.roll(self.vy, -1)[None, None, None, :] / 2.0 / self.dvy)
+            * (
+                -v0t_sq[:, :, :, None] / self.dvy**2.0
+                - jnp.roll(self.vy, -1)[None, None, None, :] / 2.0 / self.dvy
+            )
         )
         return a, b, c
 
@@ -186,7 +225,12 @@ class Dougherty(eqx.Module):
         self.vy = self.cfg["grid"]["vy"]
         self.dvy = self.cfg["grid"]["dvy"]
         self.ones = jnp.ones(
-            (self.cfg["grid"]["nx"], self.cfg["grid"]["ny"], self.cfg["grid"]["nvx"], self.cfg["grid"]["nvy"])
+            (
+                self.cfg["grid"]["nx"],
+                self.cfg["grid"]["ny"],
+                self.cfg["grid"]["nvx"],
+                self.cfg["grid"]["nvy"],
+            )
         )
 
     def vx_moment(self, f):
@@ -207,14 +251,18 @@ class Dougherty(eqx.Module):
         """
 
         vbar = self.vx_moment(f_xv * self.vx[None, None, :, None])
-        v0t_sq = self.vx_moment(f_xv * (self.vx[None, None, :, None] - vbar[:, :, None, :]) ** 2.0)
+        v0t_sq = self.vx_moment(
+            f_xv * (self.vx[None, None, :, None] - vbar[:, :, None, :]) ** 2.0
+        )
 
         a = (
             nu
             * dt
             * (
                 -v0t_sq[:, :, None, :] / self.dvx**2.0
-                + (jnp.roll(self.vx, 1)[None, None, :, None] - vbar[:, :, None, :]) / 2.0 / self.dvx
+                + (jnp.roll(self.vx, 1)[None, None, :, None] - vbar[:, :, None, :])
+                / 2.0
+                / self.dvx
             )
         )
         b = 1.0 + nu * dt * self.ones * (2.0 * v0t_sq[:, :, None, :] / self.dvx**2.0)
@@ -223,7 +271,9 @@ class Dougherty(eqx.Module):
             * dt
             * (
                 -v0t_sq[:, :, None, :] / self.dvx**2.0
-                - (jnp.roll(self.vx, -1)[None, None, :, None] - vbar[:, :, None, :]) / 2.0 / self.dvx
+                - (jnp.roll(self.vx, -1)[None, None, :, None] - vbar[:, :, None, :])
+                / 2.0
+                / self.dvx
             )
         )
         return a, b, c
@@ -240,14 +290,18 @@ class Dougherty(eqx.Module):
         """
 
         vbar = self.vy_moment(f_xv * self.vy[None, None, None, :])
-        v0t_sq = self.vy_moment(f_xv * (self.vy[None, None, None, :] - vbar[:, :, :, None]) ** 2.0)
+        v0t_sq = self.vy_moment(
+            f_xv * (self.vy[None, None, None, :] - vbar[:, :, :, None]) ** 2.0
+        )
 
         a = (
             nu
             * dt
             * (
                 -v0t_sq[:, :, :, None] / self.dvy**2.0
-                + (jnp.roll(self.vy, 1)[None, None, None, :] - vbar[:, :, :, None]) / 2.0 / self.dvy
+                + (jnp.roll(self.vy, 1)[None, None, None, :] - vbar[:, :, :, None])
+                / 2.0
+                / self.dvy
             )
         )
         b = 1.0 + nu * dt * self.ones * (2.0 * v0t_sq[:, :, :, None] / self.dvy**2.0)
@@ -256,7 +310,9 @@ class Dougherty(eqx.Module):
             * dt
             * (
                 -v0t_sq[:, :, :, None] / self.dvy**2.0
-                - (jnp.roll(self.vy, -1)[None, None, None, :] - vbar[:, :, :, None]) / 2.0 / self.dvy
+                - (jnp.roll(self.vy, -1)[None, None, None, :] - vbar[:, :, :, None])
+                / 2.0
+                / self.dvy
             )
         )
         return a, b, c

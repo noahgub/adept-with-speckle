@@ -51,7 +51,9 @@ def get_nlfs(ek, dt):
 
     # Smooth the answer
     b, a = signal.butter(8, 0.125)
-    instantaneous_frequency_smooth = signal.filtfilt(b, a, instantaneous_frequency, padlen=midpt)
+    instantaneous_frequency_smooth = signal.filtfilt(
+        b, a, instantaneous_frequency, padlen=midpt
+    )
 
     return amplitude_envelope, instantaneous_frequency_smooth
 
@@ -76,7 +78,9 @@ def plasma_dispersion_prime(value):
     return -2.0 * (1.0 + value * plasma_dispersion(value))
 
 
-def get_roots_to_electrostatic_dispersion(wp_e, vth_e, k0, maxwellian_convention_factor=2.0, initial_root_guess=None):
+def get_roots_to_electrostatic_dispersion(
+    wp_e, vth_e, k0, maxwellian_convention_factor=2.0, initial_root_guess=None
+):
     """
     This function calculates the root of the plasma dispersion relation
 
@@ -98,7 +102,9 @@ def get_roots_to_electrostatic_dispersion(wp_e, vth_e, k0, maxwellian_convention
     return epsilon_root * k0 * vth_e * np.sqrt(maxwellian_convention_factor)
 
 
-def get_dispersion_function(wp_e, vth_e, k0, maxwellian_convention_factor=2.0, initial_root_guess=None):
+def get_dispersion_function(
+    wp_e, vth_e, k0, maxwellian_convention_factor=2.0, initial_root_guess=None
+):
     """
     This function calculates the root of the plasma dispersion relation
 
@@ -144,14 +150,18 @@ def calc_depsdw(kld):
     depsdw["approx"] = np.gradient(epsilon_approx, wax[2] - wax[1])
 
     wr = np.real(
-        get_roots_to_electrostatic_dispersion(1.0, 1.0, kld, maxwellian_convention_factor=2.0, initial_root_guess=None)
+        get_roots_to_electrostatic_dispersion(
+            1.0, 1.0, kld, maxwellian_convention_factor=2.0, initial_root_guess=None
+        )
     )
     iw = np.argmin(np.abs(wax - wr))
 
     return depsdw["exact"][iw], depsdw["approx"][iw]
 
 
-def get_complex_frequency_table(num: int, kinetic_real_epw: bool) -> Tuple[np.array, np.array, np.array]:
+def get_complex_frequency_table(
+    num: int, kinetic_real_epw: bool
+) -> Tuple[np.array, np.array, np.array]:
     """
     This function creates a table of the complex plasma frequency for $0.2 < k \lambda_D < 0.4$ in `num` steps
 

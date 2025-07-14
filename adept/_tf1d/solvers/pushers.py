@@ -47,14 +47,20 @@ class WaveSolver(eqx.Module):
 
         # 2nd order ABC
         a_left = (self.one_over_const - 2.0 + self.const) * (anew[1] + aold[0])
-        a_left += 2.0 * (self.const - self.one_over_const) * (a[0] + a[2] - anew[0] - aold[1])
+        a_left += (
+            2.0 * (self.const - self.one_over_const) * (a[0] + a[2] - anew[0] - aold[1])
+        )
         a_left -= 4.0 * (self.one_over_const + self.const) * a[1]
         a_left *= coeff
         a_left -= aold[2]
         a_left = jnp.array([a_left])
 
         a_right = (self.one_over_const - 2.0 + self.const) * (anew[-2] + aold[-1])
-        a_right += 2.0 * (self.const - self.one_over_const) * (a[-1] + a[-3] - anew[-1] - aold[-2])
+        a_right += (
+            2.0
+            * (self.const - self.one_over_const)
+            * (a[-1] + a[-3] - anew[-1] - aold[-2])
+        )
         a_right -= 4.0 * (self.one_over_const + self.const) * a[-2]
         a_right *= coeff
         a_right -= aold[-3]
@@ -62,11 +68,20 @@ class WaveSolver(eqx.Module):
 
         return jnp.concatenate([a_left, anew, a_right])
 
-    def __call__(self, a: jnp.ndarray, aold: jnp.ndarray, djy_array: jnp.ndarray, electron_charge: jnp.ndarray):
+    def __call__(
+        self,
+        a: jnp.ndarray,
+        aold: jnp.ndarray,
+        djy_array: jnp.ndarray,
+        electron_charge: jnp.ndarray,
+    ):
         if self.c > 0:
             d2dx2 = (a[:-2] - 2.0 * a[1:-1] + a[2:]) / self.dx**2.0
             anew = (
-                2.0 * a[1:-1] - aold[1:-1] + self.dt**2.0 * (self.c_sq * d2dx2 - electron_charge * a[1:-1] + djy_array)
+                2.0 * a[1:-1]
+                - aold[1:-1]
+                + self.dt**2.0
+                * (self.c_sq * d2dx2 - electron_charge * a[1:-1] + djy_array)
             )
             return self.apply_2nd_order_abc(aold, a, anew), a
         else:
@@ -101,7 +116,11 @@ class Driver(eqx.Module):
         envelope_x = get_envelope(x_wL, x_wR, x_L, x_R, self.xax)
 
         return (
-            envelope_t * envelope_x * jnp.abs(kk) * this_pulse["a0"] * jnp.sin(kk * self.xax - (ww + dw) * current_time)
+            envelope_t
+            * envelope_x
+            * jnp.abs(kk)
+            * this_pulse["a0"]
+            * jnp.sin(kk * self.xax - (ww + dw) * current_time)
         )
 
 
@@ -177,8 +196,12 @@ class VelocityStepper(eqx.Module):
         else:
             kinetic_real_epw = False
 
-        table_wrs, table_wis, table_klds = get_complex_frequency_table(1024, kinetic_real_epw)
-        wrs, wis, klds = get_complex_frequency_table(1024, True if physics["gamma"] == "kinetic" else False)
+        table_wrs, table_wis, table_klds = get_complex_frequency_table(
+            1024, kinetic_real_epw
+        )
+        wrs, wis, klds = get_complex_frequency_table(
+            1024, True if physics["gamma"] == "kinetic" else False
+        )
         wrs = jnp.interp(kxr, table_klds, table_wrs, left=1.0, right=table_wrs[-1])
         self.wis = jnp.interp(kxr, table_klds, table_wis, left=0.0, right=0.0)
         self.nuee = 0.0
@@ -191,7 +214,12 @@ class VelocityStepper(eqx.Module):
             self.trapping_model = physics["trapping"]["model"]
             self.model_kld = physics["trapping"]["kld"]
             # table_klds = table_klds
-            self.vph = jnp.interp(self.model_kld, table_klds, table_wrs, left=1.0, right=table_wrs[-1]) / self.model_kld
+            self.vph = (
+                jnp.interp(
+                    self.model_kld, table_klds, table_wrs, left=1.0, right=table_wrs[-1]
+                )
+                / self.model_kld
+            )
 
         if physics["gamma"] == "kinetic":
             self.wr_corr = (jnp.square(wrs) - 1.0) * one_over_kxr**2.0
@@ -308,14 +336,25 @@ class ParticleTrapper(eqx.Module):
 
         self.kxr = cfg["grid"]["kxr"]
         self.kx = cfg["grid"]["kx"]
-        table_wrs, table_wis, table_klds = get_complex_frequency_table(1024, kinetic_real_epw)
+        table_wrs, table_wis, table_klds = get_complex_frequency_table(
+            1024, kinetic_real_epw
+        )
         self.model_kld = cfg["physics"][species]["trapping"]["kld"]
-        self.wrs = jnp.interp(cfg["grid"]["kxr"], table_klds, table_wrs, left=1.0, right=table_wrs[-1])
-        self.wis = jnp.interp(cfg["grid"]["kxr"], table_klds, table_wis, left=0.0, right=0.0)
+        self.wrs = jnp.interp(
+            cfg["grid"]["kxr"], table_klds, table_wrs, left=1.0, right=table_wrs[-1]
+        )
+        self.wis = jnp.interp(
+            cfg["grid"]["kxr"], table_klds, table_wis, left=0.0, right=0.0
+        )
         self.table_klds = table_klds
         self.norm_kld = (self.model_kld - 0.26) / 0.14
         self.norm_nuee = (jnp.log10(nuee) + 7.0) / -4.0
-        self.vph = jnp.interp(self.model_kld, table_klds, table_wrs, left=1.0, right=table_wrs[-1]) / self.model_kld
+        self.vph = (
+            jnp.interp(
+                self.model_kld, table_klds, table_wrs, left=1.0, right=table_wrs[-1]
+            )
+            / self.model_kld
+        )
 
         # Make models
         # if models:
@@ -325,7 +364,9 @@ class ParticleTrapper(eqx.Module):
 
     def __call__(self, e, delta, args):
         ek = jnp.fft.rfft(e, axis=0) * 2.0 / self.kx.size
-        norm_e = (jnp.log10(jnp.interp(self.model_kld, self.kxr, jnp.abs(ek)) + 1e-10) + 10.0) / -10.0
+        norm_e = (
+            jnp.log10(jnp.interp(self.model_kld, self.kxr, jnp.abs(ek)) + 1e-10) + 10.0
+        ) / -10.0
         func_inputs = jnp.stack([norm_e, self.norm_kld, self.norm_nuee], axis=-1)
         # jax.debug.print("{x}", x=func_inputs)
         growth_rates = 10 ** (3 * jnp.squeeze(args["nu_g"](func_inputs)))

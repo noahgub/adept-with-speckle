@@ -69,7 +69,8 @@ class BaseLPSE2D(ADEPTModule):
             solver=Stepper(),
             saveat=dict(
                 subs={
-                    k: SubSaveAt(ts=subsave["t"]["ax"], fn=subsave["func"]) for k, subsave in self.cfg["save"].items()
+                    k: SubSaveAt(ts=subsave["t"]["ax"], fn=subsave["func"])
+                    for k, subsave in self.cfg["save"].items()
                 }
             ),
         )
@@ -83,24 +84,43 @@ class BaseLPSE2D(ADEPTModule):
             )
 
         elif self.cfg["density"]["noise"]["type"] == "normal":
-            loc = 0.5 * (self.cfg["density"]["noise"]["min"] + self.cfg["density"]["noise"]["max"])
+            loc = 0.5 * (
+                self.cfg["density"]["noise"]["min"]
+                + self.cfg["density"]["noise"]["max"]
+            )
             scale = 1.0
-            random_amps = np.random.normal(loc, scale, (self.cfg["grid"]["nx"], self.cfg["grid"]["ny"]))
+            random_amps = np.random.normal(
+                loc, scale, (self.cfg["grid"]["nx"], self.cfg["grid"]["ny"])
+            )
 
         else:
             raise NotImplementedError
 
-        random_phases = np.random.uniform(0, 2 * np.pi, (self.cfg["grid"]["nx"], self.cfg["grid"]["ny"]))
+        random_phases = np.random.uniform(
+            0, 2 * np.pi, (self.cfg["grid"]["nx"], self.cfg["grid"]["ny"])
+        )
         phi_noise = 1 * np.exp(1j * random_phases)
         epw = 0 * phi_noise
 
         background_density = get_density_profile(self.cfg)
-        vte_sq = np.ones((self.cfg["grid"]["nx"], self.cfg["grid"]["ny"])) * self.cfg["units"]["derived"]["vte"] ** 2
-        E0 = np.zeros((self.cfg["grid"]["nx"], self.cfg["grid"]["ny"], 2), dtype=np.complex128)
-        state = {"background_density": background_density, "epw": epw, "E0": E0, "vte_sq": vte_sq}
+        vte_sq = (
+            np.ones((self.cfg["grid"]["nx"], self.cfg["grid"]["ny"]))
+            * self.cfg["units"]["derived"]["vte"] ** 2
+        )
+        E0 = np.zeros(
+            (self.cfg["grid"]["nx"], self.cfg["grid"]["ny"], 2), dtype=np.complex128
+        )
+        state = {
+            "background_density": background_density,
+            "epw": epw,
+            "E0": E0,
+            "vte_sq": vte_sq,
+        }
 
         self.state = {k: v.view(dtype=np.float64) for k, v in state.items()}
-        self.args = {"drivers": {k: v["derived"] for k, v in self.cfg["drivers"].items()}}
+        self.args = {
+            "drivers": {k: v["derived"] for k, v in self.cfg["drivers"].items()}
+        }
 
     @filter_jit
     def __call__(self, trainable_modules: Dict, args: Dict = None) -> Dict:
@@ -119,7 +139,7 @@ class BaseLPSE2D(ADEPTModule):
             solver=self.diffeqsolve_quants["solver"],
             t0=self.time_quantities["t0"],
             t1=self.time_quantities["t1"],
-            max_steps=None,  # self.cfg["grid"]["max_steps"],
+            max_steps=self.cfg["grid"]["max_steps"],
             dt0=self.cfg["grid"]["dt"],
             y0=state,
             args=args,

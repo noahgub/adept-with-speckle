@@ -12,22 +12,33 @@ from matplotlib import pyplot as plt
 def get_save_func(cfg):
     if cfg["save"]["func"]["is_on"]:
         if cfg["save"]["x"]["is_on"]:
-            dx = (cfg["save"]["x"]["xmax"] - cfg["save"]["x"]["xmin"]) / cfg["save"]["x"]["nx"]
+            dx = (cfg["save"]["x"]["xmax"] - cfg["save"]["x"]["xmin"]) / cfg["save"][
+                "x"
+            ]["nx"]
             cfg["save"]["x"]["ax"] = jnp.linspace(
-                cfg["save"]["x"]["xmin"] + dx / 2.0, cfg["save"]["x"]["xmax"] - dx / 2.0, cfg["save"]["x"]["nx"]
+                cfg["save"]["x"]["xmin"] + dx / 2.0,
+                cfg["save"]["x"]["xmax"] - dx / 2.0,
+                cfg["save"]["x"]["nx"],
             )
 
             save_x = partial(jnp.interp, cfg["save"]["x"]["ax"], cfg["grid"]["x"])
 
         if cfg["save"]["kx"]["is_on"]:
             cfg["save"]["kx"]["ax"] = jnp.linspace(
-                cfg["save"]["kx"]["kxmin"], cfg["save"]["kx"]["kxmax"], cfg["save"]["kx"]["nkx"]
+                cfg["save"]["kx"]["kxmin"],
+                cfg["save"]["kx"]["kxmax"],
+                cfg["save"]["kx"]["nkx"],
             )
 
             def save_kx(field):
                 complex_field = jnp.fft.rfft(field, axis=0) * 2.0 / cfg["grid"]["nx"]
-                interped_field = jnp.interp(cfg["save"]["kx"]["ax"], cfg["grid"]["kxr"], complex_field)
-                return {"mag": jnp.abs(interped_field), "ang": jnp.angle(interped_field)}
+                interped_field = jnp.interp(
+                    cfg["save"]["kx"]["ax"], cfg["grid"]["kxr"], complex_field
+                )
+                return {
+                    "mag": jnp.abs(interped_field),
+                    "ang": jnp.angle(interped_field),
+                }
 
         def save_func(t, y, args):
             save_dict = {}
@@ -140,13 +151,19 @@ def save_vector_fields(result, cfg, td):
 
 def calc_n(f00, v):
     return np.real(
-        4.0 * np.pi * (v[2] - v[1]) * np.sum(f00.view(np.complex128) * v[None, None, None, :] ** 2.0, axis=-1)
+        4.0
+        * np.pi
+        * (v[2] - v[1])
+        * np.sum(f00.view(np.complex128) * v[None, None, None, :] ** 2.0, axis=-1)
     )
 
 
 def calc_T(f00, v):
     return np.real(
-        4.0 * np.pi * (v[2] - v[1]) * np.sum(0.5 * f00.view(np.complex128) * v[None, None, None, :] ** 4.0, axis=-1)
+        4.0
+        * np.pi
+        * (v[2] - v[1])
+        * np.sum(0.5 * f00.view(np.complex128) * v[None, None, None, :] ** 4.0, axis=-1)
     )
 
 
@@ -154,16 +171,27 @@ def calc_j(f1, v):
     return jnp.concatenate(
         [
             -np.real(
-                4.0 * np.pi * (v[2] - v[1]) * np.sum(f1[0].view(np.complex128) * v[None, None, None, :] ** 3.0, axis=-1)
+                4.0
+                * np.pi
+                * (v[2] - v[1])
+                * np.sum(
+                    f1[0].view(np.complex128) * v[None, None, None, :] ** 3.0, axis=-1
+                )
             )[..., None],
             -8.0
             * np.pi
             * (v[2] - v[1])
-            * np.sum(np.real(f1[1].view(np.complex128)) * v[None, None, None, :] ** 3.0, axis=-1)[..., None],
+            * np.sum(
+                np.real(f1[1].view(np.complex128)) * v[None, None, None, :] ** 3.0,
+                axis=-1,
+            )[..., None],
             8.0
             * np.pi
             * (v[2] - v[1])
-            * np.sum(np.imag(f1[1].view(np.complex128)) * v[None, None, None, :] ** 3.0, axis=-1)[..., None],
+            * np.sum(
+                np.imag(f1[1].view(np.complex128)) * v[None, None, None, :] ** 3.0,
+                axis=-1,
+            )[..., None],
         ],
         axis=-1,
     )
@@ -246,7 +274,11 @@ def save_dists(result, cfg, td):
     }
 
     saved_arrays_xr = xr.Dataset(data_vars)
-    saved_arrays_xr.to_netcdf(os.path.join(td, "binary", f"flm_xyv.nc"), engine="h5netcdf", invalid_netcdf=True)
+    saved_arrays_xr.to_netcdf(
+        os.path.join(td, "binary", f"flm_xyv.nc"),
+        engine="h5netcdf",
+        invalid_netcdf=True,
+    )
 
     return saved_arrays_xr
 

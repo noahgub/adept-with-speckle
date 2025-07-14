@@ -25,8 +25,12 @@ class LenardBernstein:
         self.refl_v = jnp.concatenate([-self.v[::-1], self.v])
         self.midpt = self.cfg["grid"]["nv"]
         r_e = 2.8179402894e-13
-        c_kpre = r_e * np.sqrt(4 * np.pi * cfg["units"]["derived"]["n0"].to("1/cm^3").value * r_e)
-        self.nuee_coeff = 4.0 * np.pi / 3 * c_kpre * cfg["units"]["derived"]["logLambda_ee"]
+        c_kpre = r_e * np.sqrt(
+            4 * np.pi * cfg["units"]["derived"]["n0"].to("1/cm^3").value * r_e
+        )
+        self.nuee_coeff = (
+            4.0 * np.pi / 3 * c_kpre * cfg["units"]["derived"]["logLambda_ee"]
+        )
 
         # For debugging/experimentation, boosting/reducing isotropic ee collisions has no impact on LOCAL fields
         # i.e. this is a way to artificially tune dgree of nonlocality without affecting anything else
@@ -49,9 +53,13 @@ class LenardBernstein:
         """
         operator = self._get_operator_(nu, f0, dt)
         refl_f0 = jnp.concatenate([f0[::-1], f0])
-        return lx.linear_solve(operator, refl_f0, solver=lx.Tridiagonal()).value[self.midpt :]
+        return lx.linear_solve(operator, refl_f0, solver=lx.Tridiagonal()).value[
+            self.midpt :
+        ]
 
-    def _get_operator_(self, nu: float, f0: Array, dt: float) -> lx.TridiagonalLinearOperator:
+    def _get_operator_(
+        self, nu: float, f0: Array, dt: float
+    ) -> lx.TridiagonalLinearOperator:
         """
         Returns the tridiagonal operator for the Lenard-Bernstein collision operator
         Cee0 = - nuee0 (kb Te d2fdv + v dfdv)
@@ -66,14 +74,28 @@ class LenardBernstein:
 
         """
         half_vth_sq = (
-            jnp.sum(f0 * (self.v[None, :]) ** 4.0, axis=1) / jnp.sum(f0 * (self.v[None, :]) ** 2.0, axis=1) / 3.0
+            jnp.sum(f0 * (self.v[None, :]) ** 4.0, axis=1)
+            / jnp.sum(f0 * (self.v[None, :]) ** 2.0, axis=1)
+            / 3.0
         )
 
-        lower_diagonal = self.nuee_coeff * dt * (-half_vth_sq / self.dv**2.0 + (self.refl_v[:-1]) / 2.0 / self.dv)
-        diagonal = 1.0 + self.nuee_coeff * dt * self.ones * (2.0 * half_vth_sq / self.dv**2.0)
-        upper_diagonal = self.nuee_coeff * dt * (-half_vth_sq / self.dv**2.0 - (self.refl_v[1:]) / 2.0 / self.dv)
+        lower_diagonal = (
+            self.nuee_coeff
+            * dt
+            * (-half_vth_sq / self.dv**2.0 + (self.refl_v[:-1]) / 2.0 / self.dv)
+        )
+        diagonal = 1.0 + self.nuee_coeff * dt * self.ones * (
+            2.0 * half_vth_sq / self.dv**2.0
+        )
+        upper_diagonal = (
+            self.nuee_coeff
+            * dt
+            * (-half_vth_sq / self.dv**2.0 - (self.refl_v[1:]) / 2.0 / self.dv)
+        )
         return lx.TridiagonalLinearOperator(
-            diagonal=diagonal, upper_diagonal=upper_diagonal, lower_diagonal=lower_diagonal
+            diagonal=diagonal,
+            upper_diagonal=upper_diagonal,
+            lower_diagonal=lower_diagonal,
         )
 
     def __call__(self, nu: float, f0x: Array, dt: float) -> Array:
@@ -144,7 +166,13 @@ class FLMCollisions:
 
         :return: the Rosenbluth integral
         """
-        return 4 * jnp.pi * self.v**-power * jnp.cumsum(self.v[None, :] ** (2.0 + power) * flm, axis=1) * self.dv
+        return (
+            4
+            * jnp.pi
+            * self.v**-power
+            * jnp.cumsum(self.v[None, :] ** (2.0 + power) * flm, axis=1)
+            * self.dv
+        )
 
     def calc_ros_j(self, flm: Array, power: int) -> Array:
         """
@@ -157,7 +185,9 @@ class FLMCollisions:
             4
             * jnp.pi
             * self.v[None, :] ** -power
-            * jnp.cumsum((self.v[None, :] ** (2.0 + power) * flm)[:, ::-1], axis=1)[:, ::-1]
+            * jnp.cumsum((self.v[None, :] ** (2.0 + power) * flm)[:, ::-1], axis=1)[
+                :, ::-1
+            ]
             * self.dv
         )
 
@@ -176,11 +206,19 @@ class FLMCollisions:
         il = args["il"]
         flm = y
 
-        contrib = (self.a1[il] * d2dv2 + self.b1[il] * ddv) * self.calc_ros_i(flm, power=2.0 + il)
-        contrib += (self.a1[il] * d2dv2 + self.b2[il] * ddv) * self.calc_ros_j(flm, power=-il - 1.0)
-        contrib += (self.a2[il] * d2dv2 + self.b3[il] * ddv) * self.calc_ros_i(flm, power=il)
+        contrib = (self.a1[il] * d2dv2 + self.b1[il] * ddv) * self.calc_ros_i(
+            flm, power=2.0 + il
+        )
+        contrib += (self.a1[il] * d2dv2 + self.b2[il] * ddv) * self.calc_ros_j(
+            flm, power=-il - 1.0
+        )
+        contrib += (self.a2[il] * d2dv2 + self.b3[il] * ddv) * self.calc_ros_i(
+            flm, power=il
+        )
         if il > 1:
-            contrib += (self.a2[il] * d2dv2 + self.b4[il] * ddv) * self.calc_ros_j(flm, power=1.0 - il)
+            contrib += (self.a2[il] * d2dv2 + self.b4[il] * ddv) * self.calc_ros_j(
+                flm, power=1.0 - il
+            )
 
         return contrib
 
@@ -204,8 +242,12 @@ class FLMCollisions:
 
         diag_angular = -(-i2 + 2 * jm1 + 3 * i0) / (3.0 * self.v[None, :] ** 3.0)
 
-        lower_ddv = (-i2 + 2 * jm1 + 3 * i0) / (3.0 * self.v[None, :] ** 2.0) / 2 / self.dv
-        upper_ddv = (-i2 + 2 * jm1 + 3 * i0) / (3.0 * self.v[None, :] ** 2.0) / 2 / self.dv
+        lower_ddv = (
+            (-i2 + 2 * jm1 + 3 * i0) / (3.0 * self.v[None, :] ** 2.0) / 2 / self.dv
+        )
+        upper_ddv = (
+            (-i2 + 2 * jm1 + 3 * i0) / (3.0 * self.v[None, :] ** 2.0) / 2 / self.dv
+        )
 
         # adding spatial differencing coefficients here
         # 1  -2  1  for d2dv2
@@ -216,11 +258,15 @@ class FLMCollisions:
 
         return diag, lower[:, :-1], upper[:, 1:]
 
-    def _solve_one_x_tridiag_(self, diag: Array, upper: Array, lower: Array, f10: Array) -> Array:
+    def _solve_one_x_tridiag_(
+        self, diag: Array, upper: Array, lower: Array, f10: Array
+    ) -> Array:
         """
         Solves a tridiagonal system of equations
         """
-        op = lx.TridiagonalLinearOperator(diagonal=diag, upper_diagonal=upper, lower_diagonal=lower)
+        op = lx.TridiagonalLinearOperator(
+            diagonal=diag, upper_diagonal=upper, lower_diagonal=lower
+        )
         return lx.linear_solve(op, f10, solver=lx.Tridiagonal()).value
 
     def __call__(self, Z, ni, f0, f10, dt):
@@ -236,30 +282,53 @@ class FLMCollisions:
         """
 
         for il in range(1, self.nl + 1):
-            ei_diag = -il * (il + 1) / 2.0 * (Z[:, None] ** 2.0) * ni[:, None] / self.v[None, :] ** 3.0
+            ei_diag = (
+                -il
+                * (il + 1)
+                / 2.0
+                * (Z[:, None] ** 2.0)
+                * ni[:, None]
+                / self.v[None, :] ** 3.0
+            )
 
             if self.ee:
                 ee_diag, ee_lower, ee_upper = self.get_ee_diagonal_contrib(f0)
                 pad_f0 = jnp.concatenate([f0[:, 1::-1], f0], axis=1)
                 #
                 d2dv2 = (
-                    0.5 / self.v[None, :] * jnp.gradient(jnp.gradient(pad_f0, self.dv, axis=1), self.dv, axis=1)[:, 2:]
+                    0.5
+                    / self.v[None, :]
+                    * jnp.gradient(
+                        jnp.gradient(pad_f0, self.dv, axis=1), self.dv, axis=1
+                    )[:, 2:]
                 )
 
-                ddv = self.v[None, :] ** -2.0 * jnp.gradient(pad_f0, self.dv, axis=1)[:, 2:]
+                ddv = (
+                    self.v[None, :] ** -2.0
+                    * jnp.gradient(pad_f0, self.dv, axis=1)[:, 2:]
+                )
 
                 diag = 1 - dt * (self.nuei_coeff * ei_diag + self.nuee_coeff * ee_diag)
                 lower = -dt * self.nuee_coeff * ee_lower
                 upper = -dt * self.nuee_coeff * ee_upper
 
-                new_f10 = vmap(self._solve_one_x_tridiag_, in_axes=(0, 0, 0, 0))(diag, upper, lower, f10)
+                new_f10 = vmap(self._solve_one_x_tridiag_, in_axes=(0, 0, 0, 0))(
+                    diag, upper, lower, f10
+                )
 
-                new_f10 = new_f10 + dt * self.nuee_coeff * self.get_ee_offdiagonal_contrib(
-                    None, f10, {"ddvf0": ddv, "d2dv2f0": d2dv2, "il": il}
+                new_f10 = (
+                    new_f10
+                    + dt
+                    * self.nuee_coeff
+                    * self.get_ee_offdiagonal_contrib(
+                        None, f10, {"ddvf0": ddv, "d2dv2f0": d2dv2, "il": il}
+                    )
                 )
 
             else:
                 # only uses the Z* epperlein haines scaling instead of solving the ee collisions
-                new_f10 = f10 / (1 - dt * self.nuei_coeff * self.Z_nuei_scaling * ei_diag)
+                new_f10 = f10 / (
+                    1 - dt * self.nuei_coeff * self.Z_nuei_scaling * ei_diag
+                )
 
         return new_f10

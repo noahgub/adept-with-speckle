@@ -20,22 +20,160 @@ def calc_EH(this_Z: int, this_wt: float) -> float:
     """
     Z = np.array([1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 20, 30, 60, 1e6 + 1])
     g0 = np.array(
-        [3.203, 4.931, 6.115, 6.995, 7.680, 8.231, 8.685, 9.067, 9.673, 10.13, 10.5, 11.23, 11.9, 12.67, 13.58]
+        [
+            3.203,
+            4.931,
+            6.115,
+            6.995,
+            7.680,
+            8.231,
+            8.685,
+            9.067,
+            9.673,
+            10.13,
+            10.5,
+            11.23,
+            11.9,
+            12.67,
+            13.58,
+        ]
     )
-    g0p = np.array([6.18, 9.3, 10.2, 9.14, 8.6, 8.57, 8.84, 7.93, 7.44, 7.32, 7.08, 6.79, 6.74, 6.36, 6.21])
-    g1p = np.array([4.66, 3.96, 3.72, 3.6, 3.53, 3.49, 3.49, 3.43, 3.39, 3.37, 3.35, 3.32, 3.3, 3.27, 3.25])
-    c0p = np.array([1.93, 1.89, 1.66, 1.31, 1.12, 1.04, 1.02, 0.875, 0.77, 0.722, 0.674, 0.605, 0.566, 0.502, 0.457])
-    c1p = np.array([2.31, 3.78, 4.76, 4.63, 4.62, 4.83, 5.19, 4.74, 4.63, 4.7, 4.64, 4.65, 4.81, 4.71, 4.81])
+    g0p = np.array(
+        [
+            6.18,
+            9.3,
+            10.2,
+            9.14,
+            8.6,
+            8.57,
+            8.84,
+            7.93,
+            7.44,
+            7.32,
+            7.08,
+            6.79,
+            6.74,
+            6.36,
+            6.21,
+        ]
+    )
+    g1p = np.array(
+        [
+            4.66,
+            3.96,
+            3.72,
+            3.6,
+            3.53,
+            3.49,
+            3.49,
+            3.43,
+            3.39,
+            3.37,
+            3.35,
+            3.32,
+            3.3,
+            3.27,
+            3.25,
+        ]
+    )
+    c0p = np.array(
+        [
+            1.93,
+            1.89,
+            1.66,
+            1.31,
+            1.12,
+            1.04,
+            1.02,
+            0.875,
+            0.77,
+            0.722,
+            0.674,
+            0.605,
+            0.566,
+            0.502,
+            0.457,
+        ]
+    )
+    c1p = np.array(
+        [
+            2.31,
+            3.78,
+            4.76,
+            4.63,
+            4.62,
+            4.83,
+            5.19,
+            4.74,
+            4.63,
+            4.7,
+            4.64,
+            4.65,
+            4.81,
+            4.71,
+            4.81,
+        ]
+    )
     c2p = np.array(
-        [5.35, 7.78, 8.88, 8.8, 8.8, 8.96, 9.24, 8.84, 8.71, 8.73, 8.65, 8.6, 8.66, 8.52, 8.53],
+        [
+            5.35,
+            7.78,
+            8.88,
+            8.8,
+            8.8,
+            8.96,
+            9.24,
+            8.84,
+            8.71,
+            8.73,
+            8.65,
+            8.6,
+            8.66,
+            8.52,
+            8.53,
+        ],
     )
     g0w = np.array(
-        [6.071, 15.75, 25.65, 34.95, 43.45, 51.12, 58.05, 64.29, 75.04, 83.93, 91.38, 107.8, 124.3, 145.2, 172.7]
+        [
+            6.071,
+            15.75,
+            25.65,
+            34.95,
+            43.45,
+            51.12,
+            58.05,
+            64.29,
+            75.04,
+            83.93,
+            91.38,
+            107.8,
+            124.3,
+            145.2,
+            172.7,
+        ]
     )
     g0pp = np.array(
-        [4.01, 2.46, 1.13, 0.628, 0.418, 0.319, 0.268, 0.238, 0.225, 0.212, 0.202, 0.2, 0.194, 0.189, 0.186]
+        [
+            4.01,
+            2.46,
+            1.13,
+            0.628,
+            0.418,
+            0.319,
+            0.268,
+            0.238,
+            0.225,
+            0.212,
+            0.202,
+            0.2,
+            0.194,
+            0.189,
+            0.186,
+        ]
     )
-    g1pp = np.array([2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5])
+    g1pp = np.array(
+        [2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5]
+    )
     c0pp = np.array(
         [
             0.661,
@@ -74,7 +212,25 @@ def calc_EH(this_Z: int, this_wt: float) -> float:
             0.018,
         ]
     )
-    c2pp = np.array([2.5, 1.71, 1.05, 0.775, 0.646, 0.578, 0.539, 0.515, 0.497, 0.482, 0.471, 0.461, 0.45, 0.44, 0.43])
+    c2pp = np.array(
+        [
+            2.5,
+            1.71,
+            1.05,
+            0.775,
+            0.646,
+            0.578,
+            0.539,
+            0.515,
+            0.497,
+            0.482,
+            0.471,
+            0.461,
+            0.45,
+            0.44,
+            0.43,
+        ]
+    )
 
     this_g0p = np.interp(this_Z, Z, g0p)
     this_c0p = np.interp(this_Z, Z, c0p)
@@ -84,7 +240,9 @@ def calc_EH(this_Z: int, this_wt: float) -> float:
     return eh
 
 
-def store_fields(cfg: Dict, binary_dir: str, fields: Dict, this_t: np.ndarray, prefix: str) -> xr.Dataset:
+def store_fields(
+    cfg: Dict, binary_dir: str, fields: Dict, this_t: np.ndarray, prefix: str
+) -> xr.Dataset:
     """
     Stores fields to netcdf
 
@@ -110,16 +268,23 @@ def store_fields(cfg: Dict, binary_dir: str, fields: Dict, this_t: np.ndarray, p
 
         xx = cfg["save"][prefix][xnm]["ax"]
 
-        das = {f"{prefix}-{k}": xr.DataArray(v, coords=(("t (ps)", tax), (xnm, xx))) for k, v in fields.items()}
+        das = {
+            f"{prefix}-{k}": xr.DataArray(v, coords=(("t (ps)", tax), (xnm, xx)))
+            for k, v in fields.items()
+        }
     else:
         das = {}
         for k, v in fields.items():
             units, scalings = get_unit(k, cfg)
 
             for unit, scaling in zip(units, scalings):
-                das[f"{prefix}-{k} {unit}"] = xr.DataArray(v * scaling, coords=(("t (ps)", tax), ("x (um)", xax)))
+                das[f"{prefix}-{k} {unit}"] = xr.DataArray(
+                    v * scaling, coords=(("t (ps)", tax), ("x (um)", xax))
+                )
 
-    das[f"{prefix}-kappa_c"] = calc_kappa(cfg, das[f"{prefix}-T a.u."], das[f"{prefix}-q a.u."], das[f"{prefix}-n n_c"])
+    das[f"{prefix}-kappa_c"] = calc_kappa(
+        cfg, das[f"{prefix}-T a.u."], das[f"{prefix}-q a.u."], das[f"{prefix}-n n_c"]
+    )
 
     fields_xr = xr.Dataset(das)
     fields_xr.to_netcdf(os.path.join(binary_dir, f"{prefix}-t={round(tax[-1],4)}.nc"))
@@ -127,7 +292,9 @@ def store_fields(cfg: Dict, binary_dir: str, fields: Dict, this_t: np.ndarray, p
     return fields_xr
 
 
-def calc_kappa(cfg: Dict, T: xr.DataArray, q: xr.DataArray, n: xr.DataArray) -> xr.DataArray:
+def calc_kappa(
+    cfg: Dict, T: xr.DataArray, q: xr.DataArray, n: xr.DataArray
+) -> xr.DataArray:
     """
     This rescales using the EH tau ei.
 
@@ -144,10 +311,18 @@ def calc_kappa(cfg: Dict, T: xr.DataArray, q: xr.DataArray, n: xr.DataArray) -> 
         / n.data
         / T.data
         / np.gradient(T.data, cfg["grid"]["dx"], axis=1)
-        * (cfg["units"]["derived"]["nuei_epphaines"] / cfg["units"]["derived"]["wp0"]).to("").value
+        * (cfg["units"]["derived"]["nuei_epphaines"] / cfg["units"]["derived"]["wp0"])
+        .to("")
+        .value
     )
 
-    return xr.DataArray(kappa, coords=(("t (ps)", T.coords["t (ps)"].data), ("x (um)", T.coords["x (um)"].data)))
+    return xr.DataArray(
+        kappa,
+        coords=(
+            ("t (ps)", T.coords["t (ps)"].data),
+            ("x (um)", T.coords["x (um)"].data),
+        ),
+    )
 
 
 def get_unit(k, cfg: Dict = None) -> Tuple[str, float]:
@@ -229,26 +404,40 @@ def post_process(soln: Solution, cfg: Dict, td: str, args: Dict = None) -> Dict:
 
             for nm, fld in fields_xr.items():
                 fld.plot()
-                plt.savefig(os.path.join(td, "plots", "fields", f"spacetime-{nm[7:]}.png"), bbox_inches="tight")
+                plt.savefig(
+                    os.path.join(td, "plots", "fields", f"spacetime-{nm[7:]}.png"),
+                    bbox_inches="tight",
+                )
                 plt.close()
 
                 np.log10(np.abs(fld)).plot()
                 plt.savefig(
-                    os.path.join(td, "plots", "fields", "logplots", f"spacetime-log-{nm[7:]}.png"), bbox_inches="tight"
+                    os.path.join(
+                        td, "plots", "fields", "logplots", f"spacetime-log-{nm[7:]}.png"
+                    ),
+                    bbox_inches="tight",
                 )
                 plt.close()
 
                 fld[tslice].T.plot(col="t (ps)", col_wrap=4)
-                plt.savefig(os.path.join(td, "plots", "fields", "lineouts", f"{nm[7:]}.png"), bbox_inches="tight")
+                plt.savefig(
+                    os.path.join(td, "plots", "fields", "lineouts", f"{nm[7:]}.png"),
+                    bbox_inches="tight",
+                )
                 plt.close()
 
         elif k.startswith("default"):
 
             tax = soln.ts["default"] * cfg["units"]["derived"]["tp0"].to("ps").value
             scalars_xr = xr.Dataset(
-                {k: xr.DataArray(v, coords=(("t (ps)", tax),)) for k, v in soln.ys["default"].items()}
+                {
+                    k: xr.DataArray(v, coords=(("t (ps)", tax),))
+                    for k, v in soln.ys["default"].items()
+                }
             )
-            scalars_xr.to_netcdf(os.path.join(binary_dir, f"scalars-t={round(tax[-1], 4)}.nc"))
+            scalars_xr.to_netcdf(
+                os.path.join(binary_dir, f"scalars-t={round(tax[-1], 4)}.nc")
+            )
 
             for nm, srs in scalars_xr.items():
                 fig, ax = plt.subplots(1, 2, figsize=(10, 4), tight_layout=True)
@@ -257,7 +446,10 @@ def post_process(soln: Solution, cfg: Dict, td: str, args: Dict = None) -> Dict:
                 np.log10(np.abs(srs)).plot(ax=ax[1])
                 ax[1].grid()
                 ax[1].set_ylabel("$log_{10}$(|" + nm + "|)")
-                fig.savefig(os.path.join(td, "plots", "scalars", f"{nm}.png"), bbox_inches="tight")
+                fig.savefig(
+                    os.path.join(td, "plots", "scalars", f"{nm}.png"),
+                    bbox_inches="tight",
+                )
                 plt.close()
 
     f_xr = store_f(cfg, soln.ts, td, soln.ys)
@@ -291,10 +483,21 @@ def get_field_save_func(cfg: Dict, k: str) -> Callable:
     if {"t"} == set(cfg["save"][k].keys()):
 
         def _calc_f0_moment_(f0):
-            return 4 * jnp.pi * jnp.sum(f0 * cfg["grid"]["v"] ** 2.0, axis=1) * cfg["grid"]["dv"]
+            return (
+                4
+                * jnp.pi
+                * jnp.sum(f0 * cfg["grid"]["v"] ** 2.0, axis=1)
+                * cfg["grid"]["dv"]
+            )
 
         def _calc_f1_moment_(f1):
-            return 4 / 3 * jnp.pi * jnp.sum(f1 * cfg["grid"]["v"] ** 3.0, axis=1) * cfg["grid"]["dv"]
+            return (
+                4
+                / 3
+                * jnp.pi
+                * jnp.sum(f1 * cfg["grid"]["v"] ** 3.0, axis=1)
+                * cfg["grid"]["dv"]
+            )
 
         def fields_save_func(t, y, args):
             temp = {"n": _calc_f0_moment_(y["f0"]), "v": _calc_f1_moment_(y["f10"])}
@@ -345,8 +548,16 @@ def get_save_quantities(cfg: Dict) -> Dict:
 
     for k in cfg["save"].keys():  # this can be fields or electron or scalar?
 
-        tmin = (_Q(cfg["save"][k]["t"]["tmin"]) / cfg["units"]["derived"]["tp0"]).to("").value
-        tmax = (_Q(cfg["save"][k]["t"]["tmax"]) / cfg["units"]["derived"]["tp0"]).to("").value
+        tmin = (
+            (_Q(cfg["save"][k]["t"]["tmin"]) / cfg["units"]["derived"]["tp0"])
+            .to("")
+            .value
+        )
+        tmax = (
+            (_Q(cfg["save"][k]["t"]["tmax"]) / cfg["units"]["derived"]["tp0"])
+            .to("")
+            .value
+        )
         cfg["save"][k]["t"]["ax"] = jnp.linspace(tmin, tmax, cfg["save"][k]["t"]["nt"])
 
         if k.startswith("fields"):
@@ -355,7 +566,10 @@ def get_save_quantities(cfg: Dict) -> Dict:
         elif k.startswith("electron"):
             cfg["save"][k]["func"] = get_dist_save_func(cfg, k)
 
-    cfg["save"]["default"] = {"t": {"ax": cfg["grid"]["t"]}, "func": get_default_save_func(cfg)}
+    cfg["save"]["default"] = {
+        "t": {"ax": cfg["grid"]["t"]},
+        "func": get_default_save_func(cfg),
+    }
 
     return cfg
 
@@ -372,10 +586,21 @@ def get_default_save_func(cfg: Dict) -> Callable:
     dv = cfg["grid"]["dv"]
 
     def _calc_f0_moment_(f0):
-        return 4 * jnp.pi * jnp.sum(f0 * cfg["grid"]["v"] ** 2.0, axis=1) * cfg["grid"]["dv"]
+        return (
+            4
+            * jnp.pi
+            * jnp.sum(f0 * cfg["grid"]["v"] ** 2.0, axis=1)
+            * cfg["grid"]["dv"]
+        )
 
     def _calc_f1_moment_(f1):
-        return 4 / 3 * jnp.pi * jnp.sum(f1 * cfg["grid"]["v"] ** 3.0, axis=1) * cfg["grid"]["dv"]
+        return (
+            4
+            / 3
+            * jnp.pi
+            * jnp.sum(f1 * cfg["grid"]["v"] ** 3.0, axis=1)
+            * cfg["grid"]["dv"]
+        )
 
     def save(t, y, args):
         scalars = {

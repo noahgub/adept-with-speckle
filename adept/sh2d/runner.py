@@ -41,7 +41,9 @@ def write_units(cfg, td):
     # nuei = _Q(2.91e-6 * n0.magnitude * logLambda_ee / T0**1.5, "Hz")
     # nuee_norm = nuee / w0
 
-    box_length = ((cfg["grid"]["xmax"] - cfg["grid"]["xmin"]) * debye_length).to("microns")
+    box_length = ((cfg["grid"]["xmax"] - cfg["grid"]["xmin"]) * debye_length).to(
+        "microns"
+    )
     sim_duration = (cfg["grid"]["tmax"] * t0).to("ps")
 
     all_quantities = {
@@ -105,7 +107,9 @@ def run(cfg: Dict) -> Solution:
                 y0=state,
                 args=args,
                 # adjoint=diffrax.DirectAdjoint(),
-                saveat=SaveAt(ts=cfg["save"]["t"]["ax"]),  # , fn=cfg["save"]["func"]["callable"]),
+                saveat=SaveAt(
+                    ts=cfg["save"]["t"]["ax"]
+                ),  # , fn=cfg["save"]["func"]["callable"]),
             )
 
         print("starting run")
