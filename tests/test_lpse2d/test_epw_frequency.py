@@ -88,11 +88,17 @@ def _imaginary_part_():
         * exo.cfg["units"]["derived"]["wp0"] ** 4
         * k0**-3.0
         / (exo.cfg["units"]["derived"]["vte_sq"] ** 1.5)
-        * np.exp(-(exo.cfg["units"]["derived"]["wp0"] ** 2.0) / k0**2.0 / (2 * exo.cfg["units"]["derived"]["vte_sq"]))
+        * np.exp(
+            -(exo.cfg["units"]["derived"]["wp0"] ** 2.0)
+            / k0**2.0
+            / (2 * exo.cfg["units"]["derived"]["vte_sq"])
+        )
     )
     # get damping rate out of ppo
     flds = ppo["x"]
-    amplitude_envelope = np.abs(np.fft.fft(np.real(flds["phi"][:, :, 0]).data, axis=1)[:, 10])
+    amplitude_envelope = np.abs(
+        np.fft.fft(np.real(flds["phi"][:, :, 0]).data, axis=1)[:, 10]
+    )
     dt = flds.coords["t (ps)"].data[2] - flds.coords["t (ps)"].data[1]
     # amplitude_envelope, instantaneous_frequency_smooth = get_nlfs(slc, dt)
 

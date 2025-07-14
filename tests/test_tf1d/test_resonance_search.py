@@ -39,7 +39,9 @@ class Resonance(BaseTwoFluid1D):
         return -jnp.amax(nk1), solver_result
 
     def vg(self, params: Dict, args: Dict) -> Tuple[float, Array, Dict]:
-        return eqx.filter_jit(eqx.filter_value_and_grad(self.__call__, has_aux=True))(params, args)
+        return eqx.filter_jit(eqx.filter_value_and_grad(self.__call__, has_aux=True))(
+            params, args
+        )
 
 
 def load_cfg(rand_k0, gamma, adjoint):
@@ -68,7 +70,9 @@ def load_cfg(rand_k0, gamma, adjoint):
 @pytest.mark.parametrize("gamma", ["kinetic", 3.0])
 def test_resonance_search(gamma, adjoint):
     mlflow.set_experiment("tf1d-resonance-search")
-    with mlflow.start_run(run_name="res-search-opt", log_system_metrics=True) as mlflow_run:
+    with mlflow.start_run(
+        run_name="res-search-opt", log_system_metrics=True
+    ) as mlflow_run:
         # sim_k0, actual_w0 = init_w0(gamma, adjoint)
         rng = np.random.default_rng(420)
         sim_k0 = rng.uniform(0.26, 0.4)

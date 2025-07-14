@@ -19,7 +19,8 @@ def save_arrays(result: Solution, td: str, cfg: Dict, label: str) -> xr.Dataset:
         flattened_dict = dict(FlatDict(result.ys[label], delimiter="-"))
         save_ax = cfg["save"][label]["ax"]
     data_vars = {
-        k: xr.DataArray(v, coords=(("t", cfg["save"]["t"]["ax"]), (label, save_ax))) for k, v in flattened_dict.items()
+        k: xr.DataArray(v, coords=(("t", cfg["save"]["t"]["ax"]), (label, save_ax)))
+        for k, v in flattened_dict.items()
     }
 
     saved_arrays_xr = xr.Dataset(data_vars)
@@ -50,7 +51,9 @@ def plot_xrs(which: str, td: str, xrs: Dict):
 
         if which == "kx":
             os.makedirs(os.path.join(td, "plots", which, "ion", "hue"), exist_ok=True)
-            os.makedirs(os.path.join(td, "plots", which, "electron", "hue"), exist_ok=True)
+            os.makedirs(
+                os.path.join(td, "plots", which, "electron", "hue"), exist_ok=True
+            )
             # only plot
             if v.coords["kx"].size > 8:
                 hue_skip = v.coords["kx"].size // 8

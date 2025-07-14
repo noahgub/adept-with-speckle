@@ -2,6 +2,7 @@ from typing import Dict, Tuple
 from jax import numpy as jnp, Array
 from scipy.constants import c, epsilon_0
 
+
 class Light:
     def __init__(self, cfg) -> None:
         self.cfg = cfg

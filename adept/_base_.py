@@ -293,11 +293,15 @@ class ergoExo:
         elif cfg["solver"] == "vfp-1d":
             from adept.vfp1d.base import BaseVFP1D as this_module
         else:
-            raise NotImplementedError("This solver approach has not been implemented yet")
+            raise NotImplementedError(
+                "This solver approach has not been implemented yet"
+            )
 
         return this_module(cfg)
 
-    def _setup_(self, cfg: Dict, td: str, adept_module: ADEPTModule = None, log: bool = True) -> Dict[str, Module]:
+    def _setup_(
+        self, cfg: Dict, td: str, adept_module: ADEPTModule = None, log: bool = True
+    ) -> Dict[str, Module]:
         from adept.utils import log_params
 
         if adept_module is None:
@@ -311,7 +315,9 @@ class ergoExo:
                 yaml.dump(self.adept_module.cfg, fi)
 
         # dump units
-        quants_dict = self.adept_module.write_units()  # writes the units to the temporary directory
+        quants_dict = (
+            self.adept_module.write_units()
+        )  # writes the units to the temporary directory
         if log:
             with open(os.path.join(td, "units.yaml"), "w") as fi:
                 yaml.dump(quants_dict, fi)
@@ -338,7 +344,9 @@ class ergoExo:
 
         return modules
 
-    def __call__(self, modules: Dict = None, args: Dict = None, export=True) -> Tuple[Solution, Dict, str]:
+    def __call__(
+        self, modules: Dict = None, args: Dict = None, export=True
+    ) -> Tuple[Solution, Dict, str]:
         """
         This function is the main entry point for running a simulation. It takes a configuration dictionary and returns a
         ``diffrax.Solution`` object and a dictionary of datasets. It calls the ``self.adept_module``'s ``__call__`` function.
@@ -365,7 +373,9 @@ class ergoExo:
         ) as mlflow_run:
             t0 = time.time()
             run_output = filter_jit(self.adept_module.__call__)(modules, args)
-            mlflow.log_metrics({"run_time": round(time.time() - t0, 4)})  # logs the run time to mlflow
+            mlflow.log_metrics(
+                {"run_time": round(time.time() - t0, 4)}
+            )  # logs the run time to mlflow
 
             t0 = time.time()
             with tempfile.TemporaryDirectory(dir=self.base_tempdir) as td:
@@ -407,8 +417,12 @@ class ergoExo:
             (val, run_output), grad = filter_jit(self.adept_module.vg)(modules, args)
             flattened_grad, _ = jax.flatten_util.ravel_pytree(grad)
 
-            mlflow.log_metrics({"run_time": round(time.time() - t0, 4)})  # logs the run time to mlflow
-            mlflow.log_metrics({"val": float(val), "l2-grad": float(np.linalg.norm(flattened_grad))})
+            mlflow.log_metrics(
+                {"run_time": round(time.time() - t0, 4)}
+            )  # logs the run time to mlflow
+            mlflow.log_metrics(
+                {"val": float(val), "l2-grad": float(np.linalg.norm(flattened_grad))}
+            )
 
             # Log the values of the differentiable modules to mlflow
             # laser_driver_object = modules['laser']
@@ -457,4 +471,6 @@ class ergoExo:
         client = jax.lib.xla_bridge.get_backend()
         analysis = jax.lib.xla_client._xla.hlo_module_cost_analysis(client, module)
         flops_sum = analysis["flops"]
-        mlflow.log_metrics({"total GigaFLOP": flops_sum / 1e9})  # logs the flops to mlflow
+        mlflow.log_metrics(
+            {"total GigaFLOP": flops_sum / 1e9}
+        )  # logs the flops to mlflow

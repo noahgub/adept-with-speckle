@@ -9,7 +9,9 @@ import numpy as np
 import xarray as xr
 
 
-def store_fields(cfg: Dict, binary_dir: str, fields: Dict, this_t: np.ndarray, prefix: str) -> xr.Dataset:
+def store_fields(
+    cfg: Dict, binary_dir: str, fields: Dict, this_t: np.ndarray, prefix: str
+) -> xr.Dataset:
     """
     Stores fields to netcdf
 
@@ -32,7 +34,10 @@ def store_fields(cfg: Dict, binary_dir: str, fields: Dict, this_t: np.ndarray, p
 
         xx = cfg["save"][prefix][xnm]["ax"]
 
-        das = {f"{prefix}-{k}": xr.DataArray(v, coords=(("t", this_t), (xnm, xx))) for k, v in fields.items()}
+        das = {
+            f"{prefix}-{k}": xr.DataArray(v, coords=(("t", this_t), (xnm, xx)))
+            for k, v in fields.items()
+        }
     else:
         das = {}
         for k, v in fields.items():
@@ -48,11 +53,17 @@ def store_fields(cfg: Dict, binary_dir: str, fields: Dict, this_t: np.ndarray, p
             ep = ey + cfg["units"]["derived"]["c_light"].magnitude * bz
             em = ey - cfg["units"]["derived"]["c_light"].magnitude * bz
 
-            das[f"{prefix}-ep"] = xr.DataArray(ep, coords=(("t", this_t), ("x", cfg["grid"]["x"])))
-            das[f"{prefix}-em"] = xr.DataArray(em, coords=(("t", this_t), ("x", cfg["grid"]["x"])))
+            das[f"{prefix}-ep"] = xr.DataArray(
+                ep, coords=(("t", this_t), ("x", cfg["grid"]["x"]))
+            )
+            das[f"{prefix}-em"] = xr.DataArray(
+                em, coords=(("t", this_t), ("x", cfg["grid"]["x"]))
+            )
 
     fields_xr = xr.Dataset(das)
-    fields_xr.to_netcdf(os.path.join(binary_dir, f"{prefix}-t={round(this_t[-1],4)}.nc"))
+    fields_xr.to_netcdf(
+        os.path.join(binary_dir, f"{prefix}-t={round(this_t[-1],4)}.nc")
+    )
 
     return fields_xr
 
@@ -134,7 +145,11 @@ def get_field_save_func(cfg, k):
     if {"t"} == set(cfg["save"][k].keys()):
 
         def _calc_moment_(inp):
-            return jnp.sum(jnp.sum(inp, axis=2), axis=1) * cfg["grid"]["dv"] * cfg["grid"]["dv"]
+            return (
+                jnp.sum(jnp.sum(inp, axis=2), axis=1)
+                * cfg["grid"]["dv"]
+                * cfg["grid"]["dv"]
+            )
 
         def fields_save_func(t, y, args):
             temp = {
@@ -148,7 +163,9 @@ def get_field_save_func(cfg, k):
             temp["qx"] = _calc_moment_(y["electron"] * vx_m_vxbar**3.0)
             temp["py"] = _calc_moment_(y["electron"] * vy_m_vybar**2.0)
             temp["qy"] = _calc_moment_(y["electron"] * vy_m_vybar**3.0)
-            temp["-flogf"] = _calc_moment_(y["electron"] * jnp.log(jnp.abs(y["electron"])))
+            temp["-flogf"] = _calc_moment_(
+                y["electron"] * jnp.log(jnp.abs(y["electron"]))
+            )
             temp["f^2"] = _calc_moment_(y["electron"] * y["electron"])
             temp["e"] = y["e"]
             temp["de"] = y["de"]
@@ -176,7 +193,9 @@ def _get_x_save_func_(save_dict, cfg_grid):
     dx = (xmax - xmin) / nx
 
     save_x = np.linspace(xmin + dx / 2.0, xmax - dx / 2.0, nx)
-    interp_x = vmap(partial(jnp.interp, x=save_x, xp=cfg_grid["x"]), in_axes=1, out_axes=1)
+    interp_x = vmap(
+        partial(jnp.interp, x=save_x, xp=cfg_grid["x"]), in_axes=1, out_axes=1
+    )
 
     return save_x, interp_x
 
@@ -193,7 +212,9 @@ def _get_vx_save_func_(save_dict, cfg_grid):
     dvx = (vxmax - vxmin) / nvx
 
     save_v = np.linspace(vxmin + dvx / 2.0, vxmax - dvx / 2.0, nvx)
-    interp_v = vmap(partial(jnp.interp, x=save_v, xp=cfg_grid["v"]), in_axes=0, out_axes=0)
+    interp_v = vmap(
+        partial(jnp.interp, x=save_v, xp=cfg_grid["v"]), in_axes=0, out_axes=0
+    )
 
     return save_v, interp_v
 
@@ -211,7 +232,9 @@ def get_dist_save_func(cfg, k):
     elif {"t", "x", "vx"} == set(cfg["save"][k].keys()):
 
         if "nx" in cfg["save"][k]["x"]:
-            cfg["save"][k]["x"]["ax"], interp_x = _get_x_save_func_(cfg["save"][k]["x"], cfg["grid"])
+            cfg["save"][k]["x"]["ax"], interp_x = _get_x_save_func_(
+                cfg["save"][k]["x"], cfg["grid"]
+            )
         else:
             cfg["save"][k]["x"]["ax"] = cfg["grid"]["x"]
 
@@ -219,7 +242,9 @@ def get_dist_save_func(cfg, k):
                 return fp
 
         if "nvx" in cfg["save"][k]["vx"]:
-            cfg["save"][k]["vx"]["ax"], interp_vx = _get_vx_save_func_(cfg["save"][k]["vx"], cfg["grid"])
+            cfg["save"][k]["vx"]["ax"], interp_vx = _get_vx_save_func_(
+                cfg["save"][k]["vx"], cfg["grid"]
+            )
         else:
             cfg["save"][k]["vx"]["ax"] = cfg["grid"]["v"]
 
@@ -292,11 +317,15 @@ def get_default_save_func(cfg):
             "mean_j": _calc_mean_moment_(y["electron"] * v),
             "mean_n": _calc_mean_moment_(y["electron"]),
             "mean_q": _calc_mean_moment_(y["electron"] * v**3.0),
-            "mean_-flogf": _calc_mean_moment_(-jnp.log(jnp.abs(y["electron"])) * jnp.abs(y["electron"])),
+            "mean_-flogf": _calc_mean_moment_(
+                -jnp.log(jnp.abs(y["electron"])) * jnp.abs(y["electron"])
+            ),
             "mean_f2": _calc_mean_moment_(y["electron"] * y["electron"]),
             "mean_de2": jnp.mean(y["de"] ** 2.0),
             "mean_e2": jnp.mean(y["e"] ** 2.0),
-            "mean_pond": jnp.mean(-0.5 * jnp.gradient(y["a"] ** 2.0, cfg["grid"]["dx"])[1:-1]),
+            "mean_pond": jnp.mean(
+                -0.5 * jnp.gradient(y["a"] ** 2.0, cfg["grid"]["dx"])[1:-1]
+            ),
         }
 
         return scalars

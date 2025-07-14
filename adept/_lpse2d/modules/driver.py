@@ -23,7 +23,9 @@ def load(cfg: Dict, DriverModule: eqx.Module) -> eqx.Module:
             print(filename)
 
             cfg["drivers"]["E0"]["file"] = join(td, filename.split("/")[-1])
-            cfg["drivers"]["E0"]["file"] = download_from_s3(filename, cfg["drivers"]["E0"]["file"])
+            cfg["drivers"]["E0"]["file"] = download_from_s3(
+                filename, cfg["drivers"]["E0"]["file"]
+            )
         else:
             cfg["drivers"]["E0"]["file"] = filename
 
@@ -53,7 +55,9 @@ def load(cfg: Dict, DriverModule: eqx.Module) -> eqx.Module:
 
                 loaded_model = eqx.tree_deserialise_leaves(f, model)
         else:
-            raise NotImplementedError(f"File type not recognized: {filename}. Must be .pkl or .eqx")
+            raise NotImplementedError(
+                f"File type not recognized: {filename}. Must be .pkl or .eqx"
+            )
 
     return loaded_model
 
@@ -94,7 +98,9 @@ class UniformDriver(eqx.Module):
             driver_cfg["delta_omega_max"],
             driver_cfg["num_colors"],
         )
-        phase_rng = np.random.default_rng(seed=cfg["drivers"]["E0"]["params"]["phases"]["seed"])
+        phase_rng = np.random.default_rng(
+            seed=cfg["drivers"]["E0"]["params"]["phases"]["seed"]
+        )
         self.phases = jnp.array(phase_rng.uniform(-1, 1, driver_cfg["num_colors"]))
         self.envelope = driver_cfg["derived"]
 
@@ -151,9 +157,15 @@ class SpeckledDriver(UniformDriver):
         self.beam_aperture = jnp.array(driver_cfg["lasy_params"]["beam_aperture"])
         self.n_beamlets_x = jnp.array(driver_cfg["lasy_params"]["n_beamlets_x"]).item()
         self.n_beamlets_y = jnp.array(driver_cfg["lasy_params"]["n_beamlets_y"]).item()
-        self.relative_laser_bandwidth = jnp.array(driver_cfg["lasy_params"]["relative_laser_bandwidth"])
-        self.ssd_phase_modulation_amplitude = jnp.array(driver_cfg["lasy_params"]["ssd_phase_modulation_amplitude"])
-        self.ssd_number_color_cycles = jnp.array(driver_cfg["lasy_params"]["ssd_number_color_cycles"])
+        self.relative_laser_bandwidth = jnp.array(
+            driver_cfg["lasy_params"]["relative_laser_bandwidth"]
+        )
+        self.ssd_phase_modulation_amplitude = jnp.array(
+            driver_cfg["lasy_params"]["ssd_phase_modulation_amplitude"]
+        )
+        self.ssd_number_color_cycles = jnp.array(
+            driver_cfg["lasy_params"]["ssd_number_color_cycles"]
+        )
         self.ssd_transverse_bandwidth_distribution = jnp.array(
             driver_cfg["lasy_params"]["ssd_transverse_bandwidth_distribution"]
         )
@@ -191,9 +203,14 @@ class SpeckledDriver(UniformDriver):
 
         """
         if bound:
-            return self.model_cfg[param_name]["a"] + self.model_cfg[param_name]["b"] * jnp.tanh(param)
+            return self.model_cfg[param_name]["a"] + self.model_cfg[param_name][
+                "b"
+            ] * jnp.tanh(param)
         else:
-            return jnp.arctanh((param - self.model_cfg[param_name]["a"]) / self.model_cfg[param_name]["b"])
+            return jnp.arctanh(
+                (param - self.model_cfg[param_name]["a"])
+                / self.model_cfg[param_name]["b"]
+            )
 
     def get_partition_spec(self):
         """
@@ -221,7 +238,9 @@ class SpeckledDriver(UniformDriver):
         # if self.model_cfg["n_beamlets_y"]["learned"]:
         #     filter_spec = eqx.tree_at(lambda tree: tree.n_beamlets_y, filter_spec, replace=True)
         if self.model_cfg["relative_laser_bandwidth"]["learned"]:
-            filter_spec = eqx.tree_at(lambda tree: tree.relative_laser_bandwidth, filter_spec, replace=True)
+            filter_spec = eqx.tree_at(
+                lambda tree: tree.relative_laser_bandwidth, filter_spec, replace=True
+            )
         if self.model_cfg["ssd_phase_modulation_amplitude"]["learned"]:
             filter_spec = eqx.tree_at(
                 lambda tree: tree.ssd_phase_modulation_amplitude,
@@ -229,7 +248,9 @@ class SpeckledDriver(UniformDriver):
                 replace=True,
             )
         if self.model_cfg["ssd_number_color_cycles"]["learned"]:
-            filter_spec = eqx.tree_at(lambda tree: tree.ssd_number_color_cycles, filter_spec, replace=True)
+            filter_spec = eqx.tree_at(
+                lambda tree: tree.ssd_number_color_cycles, filter_spec, replace=True
+            )
         if self.model_cfg["ssd_transverse_bandwidth_distribution"]["learned"]:
             filter_spec = eqx.tree_at(
                 lambda tree: tree.ssd_transverse_bandwidth_distribution,
@@ -245,7 +266,9 @@ class SpeckledDriver(UniformDriver):
         bdd_relative_laser_bandwidth = self.relative_laser_bandwidth
         bdd_ssd_phase_modulation_amplitude = self.ssd_phase_modulation_amplitude
         bdd_ssd_number_color_cycles = self.ssd_number_color_cycles
-        bdd_ssd_transverse_bandwidth_distribution = self.ssd_transverse_bandwidth_distribution
+        bdd_ssd_transverse_bandwidth_distribution = (
+            self.ssd_transverse_bandwidth_distribution
+        )
 
         if self.model_cfg["relative_laser_bandwidth"]["learned"]:
             bdd_relative_laser_bandwidth = self.bound_param(
@@ -295,7 +318,9 @@ class ArbitraryDriver(UniformDriver):
         driver_cfg = cfg["drivers"]["E0"]
         self.model_cfg = cfg["drivers"]["E0"]["params"]
         if self.model_cfg["amplitudes"]["init"] == "random":
-            self.intensities = jnp.array(np.random.uniform(-1, 1, driver_cfg["num_colors"]))
+            self.intensities = jnp.array(
+                np.random.uniform(-1, 1, driver_cfg["num_colors"])
+            )
         elif self.model_cfg["amplitudes"]["init"] == "uniform":
             self.intensities = jnp.ones(driver_cfg["num_colors"])
         else:
@@ -333,10 +358,14 @@ class ArbitraryDriver(UniformDriver):
         filter_spec = jtu.tree_map(lambda _: False, self)
 
         if self.model_cfg["amplitudes"]["learned"]:
-            filter_spec = eqx.tree_at(lambda tree: tree.intensities, filter_spec, replace=True)
+            filter_spec = eqx.tree_at(
+                lambda tree: tree.intensities, filter_spec, replace=True
+            )
 
         if self.model_cfg["phases"]["learned"]:
-            filter_spec = eqx.tree_at(lambda tree: tree.phases, filter_spec, replace=True)
+            filter_spec = eqx.tree_at(
+                lambda tree: tree.phases, filter_spec, replace=True
+            )
 
         return filter_spec
 
@@ -373,5 +402,8 @@ class LorentzianDriver(UniformDriver):
         super().__init__(cfg)
         delta_omega_max = cfg["drivers"]["E0"]["delta_omega_max"]
         self.intensities = jnp.array(
-            1 / np.pi * (delta_omega_max / 2) / (self.delta_omega**2.0 + (delta_omega_max / 2) ** 2.0)
+            1
+            / np.pi
+            * (delta_omega_max / 2)
+            / (self.delta_omega**2.0 + (delta_omega_max / 2) ** 2.0)
         )
