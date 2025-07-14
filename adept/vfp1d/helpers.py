@@ -35,9 +35,7 @@ def gamma_5_over_m(m: float) -> Array:
     return gamma(5.0 / m)  # np.interp(m, m_ax, g_5_m)
 
 
-def calc_logLambda(
-    cfg: Dict, ne: float, Te: float, Z: int, ion_species: str
-) -> Tuple[float, float]:
+def calc_logLambda(cfg: Dict, ne: float, Te: float, Z: int, ion_species: str) -> Tuple[float, float]:
     """
     Calculate the Coulomb logarithm
 
@@ -58,10 +56,7 @@ def calc_logLambda(
 
             logLambda_ee = max(
                 2.0,
-                23.5
-                - 0.5 * log_ne
-                + 1.25 * log_Te
-                - np.sqrt(1e-5 + 0.0625 * (log_Te - 2.0) ** 2.0),
+                23.5 - 0.5 * log_ne + 1.25 * log_Te - np.sqrt(1e-5 + 0.0625 * (log_Te - 2.0) ** 2.0),
             )
 
             if Te.to("eV").value > 10 * Z**2.0:
@@ -170,29 +165,12 @@ def _initialize_total_distribution_(cfg, cfg_grid):
 
             for k in ["n", "T"]:
                 if species_params[k]["basis"] == "uniform":
-                    profs[k] = species_params[k]["baseline"] * np.ones_like(
-                        prof_total[k]
-                    )
+                    profs[k] = species_params[k]["baseline"] * np.ones_like(prof_total[k])
 
                 elif species_params[k]["basis"] == "tanh":
-                    center = (
-                        (
-                            _Q(species_params[k]["center"])
-                            / cfg["units"]["derived"]["x0"]
-                        )
-                        .to("")
-                        .value
-                    )
-                    width = (
-                        (_Q(species_params[k]["width"]) / cfg["units"]["derived"]["x0"])
-                        .to("")
-                        .value
-                    )
-                    rise = (
-                        (_Q(species_params[k]["rise"]) / cfg["units"]["derived"]["x0"])
-                        .to("")
-                        .value
-                    )
+                    center = (_Q(species_params[k]["center"]) / cfg["units"]["derived"]["x0"]).to("").value
+                    width = (_Q(species_params[k]["width"]) / cfg["units"]["derived"]["x0"]).to("").value
+                    rise = (_Q(species_params[k]["rise"]) / cfg["units"]["derived"]["x0"]).to("").value
 
                     left = center - width * 0.5
                     right = center + width * 0.5
@@ -201,33 +179,19 @@ def _initialize_total_distribution_(cfg, cfg_grid):
 
                     if species_params[k]["bump_or_trough"] == "trough":
                         prof = 1 - prof
-                    profs[k] = (
-                        species_params[k]["baseline"]
-                        + species_params[k]["bump_height"] * prof
-                    )
+                    profs[k] = species_params[k]["baseline"] + species_params[k]["bump_height"] * prof
 
                 elif species_params[k]["basis"] == "sine":
                     baseline = species_params[k]["baseline"]
                     amp = species_params[k]["amplitude"]
-                    ll = (
-                        (
-                            _Q(species_params[k]["wavelength"])
-                            / cfg["units"]["derived"]["x0"]
-                        )
-                        .to("")
-                        .value
-                    )
+                    ll = (_Q(species_params[k]["wavelength"]) / cfg["units"]["derived"]["x0"]).to("").value
 
-                    profs[k] = baseline * (
-                        1.0 + amp * jnp.sin(2 * jnp.pi / ll * cfg_grid["x"])
-                    )
+                    profs[k] = baseline * (1.0 + amp * jnp.sin(2 * jnp.pi / ll * cfg_grid["x"]))
 
                 else:
                     raise NotImplementedError
 
-            profs["n"] *= (
-                cfg["units"]["derived"]["ne"] / cfg["units"]["derived"]["n0"]
-            ).value
+            profs["n"] *= (cfg["units"]["derived"]["ne"] / cfg["units"]["derived"]["n0"]).value
 
             prof_total["n"] += profs["n"]
 
@@ -253,15 +217,11 @@ def _initialize_total_distribution_(cfg, cfg_grid):
             big_dt = 1e12
             ni = prof_total["n"] / cfg["units"]["Z"]
             f10_star = -big_dt * oshun.v[None, :] * oshun.ddx(f0)
-            f10_from_adv = oshun.ei(
-                Z=jnp.ones(cfg["grid"]["nx"]), ni=ni, f0=f0, f10=f10_star, dt=big_dt
-            )
+            f10_from_adv = oshun.ei(Z=jnp.ones(cfg["grid"]["nx"]), ni=ni, f0=f0, f10=f10_star, dt=big_dt)
             jx_from_adv = oshun.calc_j(f10_from_adv)
 
             df0dv = oshun.ddv(f0)
-            f10_from_df0dv = oshun.ei(
-                Z=jnp.ones(cfg["grid"]["nx"]), ni=ni, f0=f0, f10=df0dv, dt=big_dt
-            )
+            f10_from_df0dv = oshun.ei(Z=jnp.ones(cfg["grid"]["nx"]), ni=ni, f0=f0, f10=df0dv, dt=big_dt)
             jx_from_df0dv = oshun.calc_j(f10_from_df0dv)
 
             # directly solve for ex field

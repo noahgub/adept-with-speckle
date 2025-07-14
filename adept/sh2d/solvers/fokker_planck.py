@@ -29,22 +29,12 @@ class IsotropicCollisions(eqx.Module):
 
 
 def calc_i(v, flm, j):
-    return (
-        4
-        * jnp.pi
-        / v[None, None, :]
-        * jnp.cumsum(flm * v[None, None, :] ** (j + 2), axis=2)
-    )
+    return 4 * jnp.pi / v[None, None, :] * jnp.cumsum(flm * v[None, None, :] ** (j + 2), axis=2)
 
 
 def calc_j(v, flm, j):
     temp = jnp.cumsum(flm * v[None, None, :] ** (j + 2), axis=2)
-    return (
-        4
-        * jnp.pi
-        / v[None, None, :]
-        * (jnp.sum(flm * v[None, None, :] ** (j + 2), axis=2)[..., None] - temp)
-    )
+    return 4 * jnp.pi / v[None, None, :] * (jnp.sum(flm * v[None, None, :] ** (j + 2), axis=2)[..., None] - temp)
 
 
 class Shkarofsky(eqx.Module):
@@ -64,13 +54,9 @@ class Shkarofsky(eqx.Module):
         i00 = self.calc_i0(f00)
 
         v = self.v
-        subdiag = (1 / 3 / v) * (i20 + jm10) - (1 / 3 / v**2) * (
-            2 * jm10 - i20 + 3 * i00
-        )
+        subdiag = (1 / 3 / v) * (i20 + jm10) - (1 / 3 / v**2) * (2 * jm10 - i20 + 3 * i00)
         diag = 4 * np.pi * f00 - 2 / 3 / v * (i20 + jm10)
-        supdiag = (1 / 3 / v) * (i20 + jm10) + (1 / 3 / v**2) * (
-            2 * jm10 - i20 + 3 * i00
-        )
+        supdiag = (1 / 3 / v) * (i20 + jm10) + (1 / 3 / v**2) * (2 * jm10 - i20 + 3 * i00)
         subdiag *= -self.nuee_dt
         diag *= -self.nuee_dt
         supdiag *= -self.nuee_dt
@@ -97,26 +83,16 @@ class ChangCooper(eqx.Module):
         self.ny = cfg["grid"]["ny"]
         self.v = cfg["grid"]["v"]
         self.dv = cfg["grid"]["dv"]
-        self.nuee_dt = (
-            cfg["grid"]["dt"] * cfg["units"]["derived"]["nuee_norm"].magnitude
-        )
+        self.nuee_dt = cfg["grid"]["dt"] * cfg["units"]["derived"]["nuee_norm"].magnitude
         self.td_solve = TridiagonalSolver(cfg)
         self.zeros = jnp.zeros((cfg["grid"]["nx"], cfg["grid"]["ny"], 1))
 
     def calc_c(self, f00):
-        return (
-            4.0
-            * jnp.pi
-            * self.dv
-            * jnp.cumsum(f00 * self.v[None, None, :] ** 2.0, axis=2)
-        )
+        return 4.0 * jnp.pi * self.dv * jnp.cumsum(f00 * self.v[None, None, :] ** 2.0, axis=2)
 
     def calc_d(self, f00):
         inner_integral = (
-            jnp.cumsum(
-                (f00 * (self.v + self.dv / 2.0)[None, None, :])[..., ::-1], axis=-1
-            )[..., ::-1]
-            * self.dv
+            jnp.cumsum((f00 * (self.v + self.dv / 2.0)[None, None, :])[..., ::-1], axis=-1)[..., ::-1] * self.dv
         )
         return (
             4.0
@@ -139,9 +115,7 @@ class ChangCooper(eqx.Module):
         subdiag = -ck[..., :-1] * dlt[..., :-1] + dlt[..., :-1] / dv
 
         diag = (
-            -ck[..., :-2] * (1 - dlt[..., :-2])
-            + ck[..., 1:-1] * dlt[..., 1:-1]
-            - (dlt[..., 1:-1] + dlt[..., :-2]) / dv
+            -ck[..., :-2] * (1 - dlt[..., :-2]) + ck[..., 1:-1] * dlt[..., 1:-1] - (dlt[..., 1:-1] + dlt[..., :-2]) / dv
         )
         diag = jnp.concatenate(
             [
@@ -168,9 +142,7 @@ class ChangCooper(eqx.Module):
         supdiag = supdiag.reshape((-1, self.v.size))
         f00 = f00.reshape((-1, self.v.size))
 
-        return self.td_solve(subdiag, diag, supdiag, f00).reshape(
-            (self.nx, self.ny, self.v.size)
-        )
+        return self.td_solve(subdiag, diag, supdiag, f00).reshape((self.nx, self.ny, self.v.size))
 
 
 class AnisotropicCollisions(eqx.Module):
@@ -221,11 +193,7 @@ class AnisotropicCollisions(eqx.Module):
         coeff2 = (i_2 + j_minus_1) / 3 / self.v[None, None, :]
 
         subdiagonal = -coeff1 / 2 / self.dv + coeff2 / self.dv_sq
-        diagonal = (
-            8 * jnp.pi * flm
-            + coeff2 * 0.5 / self.dv_sq
-            - il * (il + 1) / 2 * coeff1 / self.v[None, None, :]
-        )
+        diagonal = 8 * jnp.pi * flm + coeff2 * 0.5 / self.dv_sq - il * (il + 1) / 2 * coeff1 / self.v[None, None, :]
         superdiagonal = coeff1 / 2 / self.dv + coeff2 / self.dv_sq
 
         subdiagonal = subdiagonal.reshape((self.num_batches, -1)) * self.Y_dt

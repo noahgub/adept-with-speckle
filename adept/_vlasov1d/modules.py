@@ -30,9 +30,7 @@ class BaseVlasov1D(ADEPTModule):
         n0 = _Q(self.cfg["units"]["normalizing_density"]).to("1/cc")
         T0 = _Q(self.cfg["units"]["normalizing_temperature"]).to("eV")
 
-        wp0 = np.sqrt(
-            n0 * self.ureg.e**2.0 / (self.ureg.m_e * self.ureg.epsilon_0)
-        ).to("rad/s")
+        wp0 = np.sqrt(n0 * self.ureg.e**2.0 / (self.ureg.m_e * self.ureg.epsilon_0)).to("rad/s")
         tp0 = (1 / wp0).to("fs")
 
         v0 = np.sqrt(2.0 * T0 / self.ureg.m_e).to("m/s")
@@ -40,13 +38,9 @@ class BaseVlasov1D(ADEPTModule):
         c_light = _Q(1.0 * self.ureg.c).to("m/s") / v0
         beta = (v0 / self.ureg.c).to("dimensionless")
 
-        box_length = ((self.cfg["grid"]["xmax"] - self.cfg["grid"]["xmin"]) * x0).to(
-            "microns"
-        )
+        box_length = ((self.cfg["grid"]["xmax"] - self.cfg["grid"]["xmin"]) * x0).to("microns")
         if "ymax" in self.cfg["grid"].keys():
-            box_width = ((self.cfg["grid"]["ymax"] - self.cfg["grid"]["ymin"]) * x0).to(
-                "microns"
-            )
+            box_width = ((self.cfg["grid"]["ymax"] - self.cfg["grid"]["ymin"]) * x0).to("microns")
         else:
             box_width = "inf"
         sim_duration = (self.cfg["grid"]["tmax"] * tp0).to("ps")
@@ -95,9 +89,7 @@ class BaseVlasov1D(ADEPTModule):
 
         if len(self.cfg["drivers"]["ey"].keys()) > 0:
             print("overriding dt to ensure wave solver stability")
-            cfg_grid["dt"] = (
-                0.95 * cfg_grid["dx"] / self.cfg["units"]["derived"]["c_light"]
-            )
+            cfg_grid["dt"] = 0.95 * cfg_grid["dx"] / self.cfg["units"]["derived"]["c_light"]
 
         cfg_grid["nt"] = int(cfg_grid["tmax"] / cfg_grid["dt"] + 1)
 
@@ -164,16 +156,12 @@ class BaseVlasov1D(ADEPTModule):
         # get_profile_with_mask(cfg["nu"]["time-profile"], t, cfg["nu"]["time-profile"]["bump_or_trough"])
         cfg_grid["ktprof"] = 1.0
         # get_profile_with_mask(cfg["krook"]["time-profile"], t, cfg["krook"]["time-profile"]["bump_or_trough"])
-        cfg_grid["n_prof_total"], cfg_grid["starting_f"] = (
-            _initialize_total_distribution_(self.cfg, cfg_grid)
-        )
+        cfg_grid["n_prof_total"], cfg_grid["starting_f"] = _initialize_total_distribution_(self.cfg, cfg_grid)
 
         cfg_grid["kprof"] = np.ones_like(cfg_grid["n_prof_total"])
         # get_profile_with_mask(cfg["krook"]["space-profile"], xs, cfg["krook"]["space-profile"]["bump_or_trough"])
 
-        cfg_grid["ion_charge"] = (
-            np.zeros_like(cfg_grid["n_prof_total"]) + cfg_grid["n_prof_total"]
-        )
+        cfg_grid["ion_charge"] = np.zeros_like(cfg_grid["n_prof_total"]) + cfg_grid["n_prof_total"]
 
         cfg_grid["x_a"] = np.concatenate(
             [
@@ -221,12 +209,7 @@ class BaseVlasov1D(ADEPTModule):
         self.diffeqsolve_quants = dict(
             terms=ODETerm(VlasovMaxwell(self.cfg)),
             solver=Stepper(),
-            saveat=dict(
-                subs={
-                    k: SubSaveAt(ts=v["t"]["ax"], fn=v["func"])
-                    for k, v in self.cfg["save"].items()
-                }
-            ),
+            saveat=dict(subs={k: SubSaveAt(ts=v["t"]["ax"], fn=v["func"]) for k, v in self.cfg["save"].items()}),
         )
 
     def __call__(self, trainable_modules: Dict, args: Dict = None):

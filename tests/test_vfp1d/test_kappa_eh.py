@@ -7,9 +7,7 @@ from jax import devices
 
 def _run_(Z, ee):
     # with open("configs/tf-1d/damping.yaml", "r") as fi:
-    with open(
-        f"{os.path.join(os.getcwd(), 'tests/test_vfp1d/epp-short')}.yaml", "r"
-    ) as fi:
+    with open(f"{os.path.join(os.getcwd(), 'tests/test_vfp1d/epp-short')}.yaml", "r") as fi:
         cfg = yaml.safe_load(fi)
 
     cfg["units"]["Z"] = Z
@@ -22,14 +20,10 @@ def _run_(Z, ee):
     exo.setup(cfg)
     sol, datasets, run_id = exo(None)
     dataT = datasets["fields"]["fields-T keV"].data
-    np.testing.assert_almost_equal(
-        np.mean(dataT[-4, :]), np.mean(dataT[4, :]), decimal=5
-    )
+    np.testing.assert_almost_equal(np.mean(dataT[-4, :]), np.mean(dataT[4, :]), decimal=5)
 
     datan = datasets["fields"]["fields-n n_c"].data
-    np.testing.assert_almost_equal(
-        np.mean(datan[-4, :]), np.mean(datan[4, :]), decimal=5
-    )
+    np.testing.assert_almost_equal(np.mean(datan[-4, :]), np.mean(datan[4, :]), decimal=5)
 
     kappa_eh = mlflow.get_run(run_id).data.metrics["kappa_eh"]
     kappa = mlflow.get_run(run_id).data.metrics["kappa"]

@@ -112,9 +112,7 @@ def get_save_quantities(cfg: Dict) -> Dict:
     :return:
     """
     # cfg["save"]["func"] = {**cfg["save"]["func"], **{"callable": get_save_func(cfg)}}
-    cfg["save"]["t"]["ax"] = jnp.linspace(
-        cfg["save"]["t"]["tmin"], cfg["save"]["t"]["tmax"], cfg["save"]["t"]["nt"]
-    )
+    cfg["save"]["t"]["ax"] = jnp.linspace(cfg["save"]["t"]["tmin"], cfg["save"]["t"]["tmax"], cfg["save"]["t"]["nt"])
     # cfg["save"]["x"]["ax"] = jnp.linspace(cfg["save"]["x"]["xmin"], cfg["save"]["x"]["xmax"], cfg["save"]["x"]["nx"])
     # cfg["save"]["y"]["ax"] = jnp.linspace(cfg["save"]["y"]["ymin"], cfg["save"]["y"]["ymax"], cfg["save"]["y"]["ny"])
 
@@ -133,10 +131,7 @@ def init_state(cfg: Dict) -> tuple[Dict, Dict]:
     ny = cfg["grid"]["ny"]
     nv = cfg["grid"]["nv"]
     norm = 1.0 / (
-        4.0
-        * jnp.pi
-        * cfg["grid"]["dv"]
-        * jnp.sum(cfg["grid"]["v"] ** 2.0 * jnp.exp(-cfg["grid"]["v"] ** 2.0 / 2.0))
+        4.0 * jnp.pi * cfg["grid"]["dv"] * jnp.sum(cfg["grid"]["v"] ** 2.0 * jnp.exp(-cfg["grid"]["v"] ** 2.0 / 2.0))
     )
 
     density_profile = jnp.ones((nx, ny))  # cfg["profile"]["density"]
@@ -147,22 +142,14 @@ def init_state(cfg: Dict) -> tuple[Dict, Dict]:
     state["flm"][0][0] = (
         norm
         * density_profile[:, :, None]
-        * jnp.exp(
-            -cfg["grid"]["v"][None, None, :] ** 2.0
-            / 2.0
-            / temperature_profile[:, :, None]
-        )
+        * jnp.exp(-cfg["grid"]["v"][None, None, :] ** 2.0 / 2.0 / temperature_profile[:, :, None])
     )
-    state["flm"][0][0] = jnp.array(state["flm"][0][0], dtype=jnp.complex128).view(
-        dtype=jnp.float64
-    )
+    state["flm"][0][0] = jnp.array(state["flm"][0][0], dtype=jnp.complex128).view(dtype=jnp.float64)
 
     for il in range(1, cfg["grid"]["nl"] + 1):
         state["flm"][il] = {}
         for im in range(0, il + 1):
-            state["flm"][il][im] = jnp.zeros((nx, ny, nv), dtype=jnp.complex128).view(
-                dtype=jnp.float64
-            )
+            state["flm"][il][im] = jnp.zeros((nx, ny, nv), dtype=jnp.complex128).view(dtype=jnp.float64)
 
     state["e"] = jnp.zeros((nx, ny, 3))
     state["b"] = jnp.zeros((nx, ny, 3))
@@ -304,9 +291,7 @@ class ExplicitEStepper(Euler):
         # y1, _, dense_info, _, success = self.vlasov_stepper.step(
         #     vlasov_term, t0, t1, y0, args, solver_state, made_jump
         # )
-        y1 = (
-            y0**ω + vlasov_term.vf_prod(t0, y0, args, vlasov_term.contr(t0, t1)) ** ω
-        ).ω
+        y1 = (y0**ω + vlasov_term.vf_prod(t0, y0, args, vlasov_term.contr(t0, t1)) ** ω).ω
         # y1, _, dense_info, _, success = self.vlasov_stepper.step(term_2, t0, t1, y0, args, solver_state, made_jump)
         y1 = collision_term.vf(t0, y1, args)
 
@@ -322,9 +307,7 @@ class ImplicitEStepper(Euler):
     def step(self, terms, t0, t1, y0, args, solver_state, made_jump):
         del solver_state, made_jump
         vlasov_without_e, vlasov_e, collisions, implicit_e_solve = terms
-        y_after_vlasov_part_a = vlasov_without_e.vf_prod(
-            t0, y0, args, vlasov.contr(t0, t1)
-        )
+        y_after_vlasov_part_a = vlasov_without_e.vf_prod(t0, y0, args, vlasov.contr(t0, t1))
 
         de = self.calc_de(y_after_vlasov_part_a)
 
@@ -332,23 +315,15 @@ class ImplicitEStepper(Euler):
         j0 = self.calc_j0(y_after_vlasov_part_a)
 
         # get jdEx
-        y_after_vlasov_part_a["e"] = jnp.concatenate(
-            [de[..., :1], self.zeros, self.zeros]
-        )
-        e_dex = vlasov_e.vf_prod(
-            t0, y_after_vlasov_part_a, args, vlasov_e.contr(t0, t1)
-        )
+        y_after_vlasov_part_a["e"] = jnp.concatenate([de[..., :1], self.zeros, self.zeros])
+        e_dex = vlasov_e.vf_prod(t0, y_after_vlasov_part_a, args, vlasov_e.contr(t0, t1))
 
         # get jdEy
-        y_after_vlasov_part_a["e"] = jnp.concatenate(
-            [self.zeros, de[..., 1:2], self.zeros]
-        )
+        y_after_vlasov_part_a["e"] = jnp.concatenate([self.zeros, de[..., 1:2], self.zeros])
         jdey = vlasov_e.vf_prod(t0, y_after_vlasov_part_a, args, vlasov_e.contr(t0, t1))
 
         # get jdEz
-        y_after_vlasov_part_a["e"] = jnp.concatenate(
-            [self.zeros, self.zeros, de[..., 2:]]
-        )
+        y_after_vlasov_part_a["e"] = jnp.concatenate([self.zeros, self.zeros, de[..., 2:]])
         jdez = vlasov_e.vf_prod(t0, y_after_vlasov_part_a, args, vlasov_e.contr(t0, t1))
 
         # get JN

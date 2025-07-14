@@ -101,9 +101,7 @@ class Edfdv(eqx.Module):
             self.c1[il] = 1 / (2 * il + 1) * il / (2 * (il + 1))
             for im in range(il + 1):
                 self.a1[il][im] = (il + 1 - im) / (2 * il + 1) * il / (2 * (il + 1))
-                self.c2[il][im] = (
-                    -(il - im + 2) * (il - im + 1) / (2 * il + 1) * il / (2 * (il + 1))
-                )
+                self.c2[il][im] = -(il - im + 2) * (il - im + 1) / (2 * il + 1) * il / (2 * (il + 1))
                 self.b1[il][im] = -il / (2 * il + 1) * (il / 2)
                 self.a2[il][im] = (il + im) / (2 * il + 1)
                 self.c3[il][im] = 0.5 / (2 * il + 1)
@@ -119,10 +117,7 @@ class Edfdv(eqx.Module):
 
     def ddv(self, f):
         return (
-            jnp.gradient(
-                jnp.concatenate([-f[..., 0:1], f, 0.0 * f[..., 0:1]], axis=-1), axis=-1
-            )[..., 1:-1]
-            / self.dv
+            jnp.gradient(jnp.concatenate([-f[..., 0:1], f, 0.0 * f[..., 0:1]], axis=-1), axis=-1)[..., 1:-1] / self.dv
         )
 
     def calc_gh(self, prev_f: Dict) -> Tuple[Dict, Dict]:
@@ -231,12 +226,8 @@ class Bdfdv(eqx.Module):
                 delta_f[il][im + 1] = 0.5 * bm[..., None] * prev_f[il][im]  # a3
             for im in range(1, il + 1):
                 delta_f[il][im] += -1j * im * bx[..., None] * prev_f[il][im]  # a1
-                delta_f[il][im - 1] += (
-                    -(il - im + 1) * (il + im) / 2.0 * bm[..., None] * prev_f[il][im]
-                )  # a2
-            delta_f[il][0] += jnp.real(
-                -il * (il + 1) * bp[..., None] * prev_f[il][1]
-            )  # b1
+                delta_f[il][im - 1] += -(il - im + 1) * (il + im) / 2.0 * bm[..., None] * prev_f[il][im]  # a2
+            delta_f[il][0] += jnp.real(-il * (il + 1) * bp[..., None] * prev_f[il][1])  # b1
 
         return delta_f
 
@@ -256,44 +247,24 @@ class Vdfdx(eqx.Module):
         self.dy = cfg["grid"]["dy"]
 
     def ddx(self, flm):
-        return (
-            jnp.gradient(jnp.concatenate([flm[-1:], flm, flm[:1]]), axis=0)[1:-1]
-            / self.dx
-        )
+        return jnp.gradient(jnp.concatenate([flm[-1:], flm, flm[:1]]), axis=0)[1:-1] / self.dx
 
     def calc_a1(self, prev_f, il, im):
-        return (
-            -((il - im + 1) / (2 * il + 1))
-            * self.v[None, None, :]
-            * self.ddx(prev_f[il][im])
-        )
+        return -((il - im + 1) / (2 * il + 1)) * self.v[None, None, :] * self.ddx(prev_f[il][im])
 
     def calc_a2(self, prev_f, il, im):
-        return (
-            -((il + im) / (2 * il + 1))
-            * self.v[None, None, :]
-            * self.ddx(prev_f[il][im])
-        )
+        return -((il + im) / (2 * il + 1)) * self.v[None, None, :] * self.ddx(prev_f[il][im])
 
     def calc_b1(self, prev_f, il, im):
         return (
-            (il * (il + 1) / (2 * il + 1))
-            * self.v[None, None, :]
-            * jnp.gradient(prev_f[il][im + 1], axis=1)
-            / self.dy
+            (il * (il + 1) / (2 * il + 1)) * self.v[None, None, :] * jnp.gradient(prev_f[il][im + 1], axis=1) / self.dy
         )
 
     def calc_b2(self, prev_f, il, im):
         return -self.calc_b1(-prev_f, il, im)
 
     def calc_c1(self, prev_f, il, im):
-        return (
-            -(1.0 / (2 * il + 1))
-            * 0.5
-            * self.v[None, None, :]
-            * jnp.gradient(prev_f[il][im], axis=1)
-            / self.dy
-        )
+        return -(1.0 / (2 * il + 1)) * 0.5 * self.v[None, None, :] * jnp.gradient(prev_f[il][im], axis=1) / self.dy
 
     def calc_c2(self, prev_f, il, im):
         return (

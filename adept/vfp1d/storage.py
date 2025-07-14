@@ -171,9 +171,7 @@ def calc_EH(this_Z: int, this_wt: float) -> float:
             0.186,
         ]
     )
-    g1pp = np.array(
-        [2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5]
-    )
+    g1pp = np.array([2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5])
     c0pp = np.array(
         [
             0.661,
@@ -240,9 +238,7 @@ def calc_EH(this_Z: int, this_wt: float) -> float:
     return eh
 
 
-def store_fields(
-    cfg: Dict, binary_dir: str, fields: Dict, this_t: np.ndarray, prefix: str
-) -> xr.Dataset:
+def store_fields(cfg: Dict, binary_dir: str, fields: Dict, this_t: np.ndarray, prefix: str) -> xr.Dataset:
     """
     Stores fields to netcdf
 
@@ -268,23 +264,16 @@ def store_fields(
 
         xx = cfg["save"][prefix][xnm]["ax"]
 
-        das = {
-            f"{prefix}-{k}": xr.DataArray(v, coords=(("t (ps)", tax), (xnm, xx)))
-            for k, v in fields.items()
-        }
+        das = {f"{prefix}-{k}": xr.DataArray(v, coords=(("t (ps)", tax), (xnm, xx))) for k, v in fields.items()}
     else:
         das = {}
         for k, v in fields.items():
             units, scalings = get_unit(k, cfg)
 
             for unit, scaling in zip(units, scalings):
-                das[f"{prefix}-{k} {unit}"] = xr.DataArray(
-                    v * scaling, coords=(("t (ps)", tax), ("x (um)", xax))
-                )
+                das[f"{prefix}-{k} {unit}"] = xr.DataArray(v * scaling, coords=(("t (ps)", tax), ("x (um)", xax)))
 
-    das[f"{prefix}-kappa_c"] = calc_kappa(
-        cfg, das[f"{prefix}-T a.u."], das[f"{prefix}-q a.u."], das[f"{prefix}-n n_c"]
-    )
+    das[f"{prefix}-kappa_c"] = calc_kappa(cfg, das[f"{prefix}-T a.u."], das[f"{prefix}-q a.u."], das[f"{prefix}-n n_c"])
 
     fields_xr = xr.Dataset(das)
     fields_xr.to_netcdf(os.path.join(binary_dir, f"{prefix}-t={round(tax[-1],4)}.nc"))
@@ -292,9 +281,7 @@ def store_fields(
     return fields_xr
 
 
-def calc_kappa(
-    cfg: Dict, T: xr.DataArray, q: xr.DataArray, n: xr.DataArray
-) -> xr.DataArray:
+def calc_kappa(cfg: Dict, T: xr.DataArray, q: xr.DataArray, n: xr.DataArray) -> xr.DataArray:
     """
     This rescales using the EH tau ei.
 
@@ -311,9 +298,7 @@ def calc_kappa(
         / n.data
         / T.data
         / np.gradient(T.data, cfg["grid"]["dx"], axis=1)
-        * (cfg["units"]["derived"]["nuei_epphaines"] / cfg["units"]["derived"]["wp0"])
-        .to("")
-        .value
+        * (cfg["units"]["derived"]["nuei_epphaines"] / cfg["units"]["derived"]["wp0"]).to("").value
     )
 
     return xr.DataArray(
@@ -412,9 +397,7 @@ def post_process(soln: Solution, cfg: Dict, td: str, args: Dict = None) -> Dict:
 
                 np.log10(np.abs(fld)).plot()
                 plt.savefig(
-                    os.path.join(
-                        td, "plots", "fields", "logplots", f"spacetime-log-{nm[7:]}.png"
-                    ),
+                    os.path.join(td, "plots", "fields", "logplots", f"spacetime-log-{nm[7:]}.png"),
                     bbox_inches="tight",
                 )
                 plt.close()
@@ -430,14 +413,9 @@ def post_process(soln: Solution, cfg: Dict, td: str, args: Dict = None) -> Dict:
 
             tax = soln.ts["default"] * cfg["units"]["derived"]["tp0"].to("ps").value
             scalars_xr = xr.Dataset(
-                {
-                    k: xr.DataArray(v, coords=(("t (ps)", tax),))
-                    for k, v in soln.ys["default"].items()
-                }
+                {k: xr.DataArray(v, coords=(("t (ps)", tax),)) for k, v in soln.ys["default"].items()}
             )
-            scalars_xr.to_netcdf(
-                os.path.join(binary_dir, f"scalars-t={round(tax[-1], 4)}.nc")
-            )
+            scalars_xr.to_netcdf(os.path.join(binary_dir, f"scalars-t={round(tax[-1], 4)}.nc"))
 
             for nm, srs in scalars_xr.items():
                 fig, ax = plt.subplots(1, 2, figsize=(10, 4), tight_layout=True)
@@ -483,21 +461,10 @@ def get_field_save_func(cfg: Dict, k: str) -> Callable:
     if {"t"} == set(cfg["save"][k].keys()):
 
         def _calc_f0_moment_(f0):
-            return (
-                4
-                * jnp.pi
-                * jnp.sum(f0 * cfg["grid"]["v"] ** 2.0, axis=1)
-                * cfg["grid"]["dv"]
-            )
+            return 4 * jnp.pi * jnp.sum(f0 * cfg["grid"]["v"] ** 2.0, axis=1) * cfg["grid"]["dv"]
 
         def _calc_f1_moment_(f1):
-            return (
-                4
-                / 3
-                * jnp.pi
-                * jnp.sum(f1 * cfg["grid"]["v"] ** 3.0, axis=1)
-                * cfg["grid"]["dv"]
-            )
+            return 4 / 3 * jnp.pi * jnp.sum(f1 * cfg["grid"]["v"] ** 3.0, axis=1) * cfg["grid"]["dv"]
 
         def fields_save_func(t, y, args):
             temp = {"n": _calc_f0_moment_(y["f0"]), "v": _calc_f1_moment_(y["f10"])}
@@ -548,16 +515,8 @@ def get_save_quantities(cfg: Dict) -> Dict:
 
     for k in cfg["save"].keys():  # this can be fields or electron or scalar?
 
-        tmin = (
-            (_Q(cfg["save"][k]["t"]["tmin"]) / cfg["units"]["derived"]["tp0"])
-            .to("")
-            .value
-        )
-        tmax = (
-            (_Q(cfg["save"][k]["t"]["tmax"]) / cfg["units"]["derived"]["tp0"])
-            .to("")
-            .value
-        )
+        tmin = (_Q(cfg["save"][k]["t"]["tmin"]) / cfg["units"]["derived"]["tp0"]).to("").value
+        tmax = (_Q(cfg["save"][k]["t"]["tmax"]) / cfg["units"]["derived"]["tp0"]).to("").value
         cfg["save"][k]["t"]["ax"] = jnp.linspace(tmin, tmax, cfg["save"][k]["t"]["nt"])
 
         if k.startswith("fields"):
@@ -586,21 +545,10 @@ def get_default_save_func(cfg: Dict) -> Callable:
     dv = cfg["grid"]["dv"]
 
     def _calc_f0_moment_(f0):
-        return (
-            4
-            * jnp.pi
-            * jnp.sum(f0 * cfg["grid"]["v"] ** 2.0, axis=1)
-            * cfg["grid"]["dv"]
-        )
+        return 4 * jnp.pi * jnp.sum(f0 * cfg["grid"]["v"] ** 2.0, axis=1) * cfg["grid"]["dv"]
 
     def _calc_f1_moment_(f1):
-        return (
-            4
-            / 3
-            * jnp.pi
-            * jnp.sum(f1 * cfg["grid"]["v"] ** 3.0, axis=1)
-            * cfg["grid"]["dv"]
-        )
+        return 4 / 3 * jnp.pi * jnp.sum(f1 * cfg["grid"]["v"] ** 3.0, axis=1) * cfg["grid"]["dv"]
 
     def save(t, y, args):
         scalars = {

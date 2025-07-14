@@ -71,9 +71,7 @@ def write_units(cfg: Dict) -> Dict:
     Te_eV = Te * 1000
 
     coulomb_log = (
-        23.0 - np.log(np.sqrt(ne_cc) * Z / Te_eV**1.5)
-        if Te_eV < 10 * Z**2
-        else 24.0 - np.log(np.sqrt(ne_cc) / Te_eV)
+        23.0 - np.log(np.sqrt(ne_cc) * Z / Te_eV**1.5) if Te_eV < 10 * Z**2 else 24.0 - np.log(np.sqrt(ne_cc) / Te_eV)
     )
     fract = 1
     Zbar = Z * fract
@@ -84,26 +82,14 @@ def write_units(cfg: Dict) -> Dict:
     if cfg["terms"]["epw"]["damping"]["collisions"]:
         if isinstance(cfg["terms"]["epw"]["damping"]["collisions"], bool):
             if Te_eV < 0.01 * Z**2:
-                logLambda_ei = 22.8487 - np.log(
-                    np.sqrt(ne_cc) * Z / (Te * 1000) ** (3 / 2)
-                )
+                logLambda_ei = 22.8487 - np.log(np.sqrt(ne_cc) * Z / (Te * 1000) ** (3 / 2))
             elif Te_eV > 0.01 * Z**2:
                 logLambda_ei = 24 - np.log(np.sqrt(ne_cc) / (Te * 1000))
 
             e_sq = 510.9896 * 2.8179e-13
             this_me = 510.9896 / 2.99792458e10**2
             nu_coll = float(
-                (
-                    4
-                    * np.sqrt(2 * np.pi)
-                    / 3
-                    * e_sq**2
-                    / np.sqrt(this_me)
-                    * Z**2
-                    * ni
-                    * logLambda_ei
-                    / Te**1.5
-                )
+                (4 * np.sqrt(2 * np.pi) / 3 * e_sq**2 / np.sqrt(this_me) * Z**2 * ni * logLambda_ei / Te**1.5)
                 / 2
                 * timeScale
             )
@@ -113,9 +99,7 @@ def write_units(cfg: Dict) -> Dict:
         nu_coll = 0.0  # nu_ee + nu_ei + nu_sideloss
 
     if "gradient scale length" in cfg["density"]:
-        gradient_scale_length = (
-            _Q(cfg["density"]["gradient scale length"]).to("um").value
-        )
+        gradient_scale_length = _Q(cfg["density"]["gradient scale length"]).to("um").value
         I_thresh = calc_threshold_intensity(Te, Ln=gradient_scale_length, w0=w0)
     else:
         I_thresh = "n/a"
@@ -163,17 +147,7 @@ def calc_threshold_intensity(Te: float, Ln: float, w0: float) -> float:
     e = 4.8032068e-10
 
     vte = np.sqrt(Te / me_keV) * c
-    I_threshold = (
-        4
-        * 4.134
-        * 1
-        / (8 * np.pi)
-        * (me_cgs * c / e) ** 2
-        * w0
-        * vte**2
-        / (Ln / 100)
-        * 1e-7
-    )
+    I_threshold = 4 * 4.134 * 1 / (8 * np.pi) * (me_cgs * c / e) ** 2 * w0 * vte**2 / (Ln / 100) * 1e-7
 
     return I_threshold
 
@@ -198,9 +172,7 @@ def get_derived_quantities(cfg: Dict) -> Dict:
         nmin = cfg["density"]["min"]
         Lgrid = L / 0.25 * (nmax - nmin)
 
-        print(
-            "Ignoring xmax and xmin and using the density gradient scale length to set the grid size"
-        )
+        print("Ignoring xmax and xmin and using the density gradient scale length to set the grid size")
         print("Grid size = L / 0.25 * (nmax - nmin) = ", Lgrid, "um")
     else:
         Lgrid = _Q(cfg_grid["xmax"]).to("um").value
@@ -230,33 +202,15 @@ def get_derived_quantities(cfg: Dict) -> Dict:
     # change driver parameters to the right units
     for k in cfg["drivers"].keys():
         cfg["drivers"][k]["derived"] = {}
-        cfg["drivers"][k]["derived"]["tw"] = (
-            _Q(cfg["drivers"][k]["envelope"]["tw"]).to("ps").value
-        )
-        cfg["drivers"][k]["derived"]["tc"] = (
-            _Q(cfg["drivers"][k]["envelope"]["tc"]).to("ps").value
-        )
-        cfg["drivers"][k]["derived"]["tr"] = (
-            _Q(cfg["drivers"][k]["envelope"]["tr"]).to("ps").value
-        )
-        cfg["drivers"][k]["derived"]["xr"] = (
-            _Q(cfg["drivers"][k]["envelope"]["xr"]).to("um").value
-        )
-        cfg["drivers"][k]["derived"]["xc"] = (
-            _Q(cfg["drivers"][k]["envelope"]["xc"]).to("um").value
-        )
-        cfg["drivers"][k]["derived"]["xw"] = (
-            _Q(cfg["drivers"][k]["envelope"]["xw"]).to("um").value
-        )
-        cfg["drivers"][k]["derived"]["yw"] = (
-            _Q(cfg["drivers"][k]["envelope"]["yw"]).to("um").value
-        )
-        cfg["drivers"][k]["derived"]["yr"] = (
-            _Q(cfg["drivers"][k]["envelope"]["yr"]).to("um").value
-        )
-        cfg["drivers"][k]["derived"]["yc"] = (
-            _Q(cfg["drivers"][k]["envelope"]["yc"]).to("um").value
-        )
+        cfg["drivers"][k]["derived"]["tw"] = _Q(cfg["drivers"][k]["envelope"]["tw"]).to("ps").value
+        cfg["drivers"][k]["derived"]["tc"] = _Q(cfg["drivers"][k]["envelope"]["tc"]).to("ps").value
+        cfg["drivers"][k]["derived"]["tr"] = _Q(cfg["drivers"][k]["envelope"]["tr"]).to("ps").value
+        cfg["drivers"][k]["derived"]["xr"] = _Q(cfg["drivers"][k]["envelope"]["xr"]).to("um").value
+        cfg["drivers"][k]["derived"]["xc"] = _Q(cfg["drivers"][k]["envelope"]["xc"]).to("um").value
+        cfg["drivers"][k]["derived"]["xw"] = _Q(cfg["drivers"][k]["envelope"]["xw"]).to("um").value
+        cfg["drivers"][k]["derived"]["yw"] = _Q(cfg["drivers"][k]["envelope"]["yw"]).to("um").value
+        cfg["drivers"][k]["derived"]["yr"] = _Q(cfg["drivers"][k]["envelope"]["yr"]).to("um").value
+        cfg["drivers"][k]["derived"]["yc"] = _Q(cfg["drivers"][k]["envelope"]["yc"]).to("um").value
         if "k0" in cfg["drivers"][k]:
             cfg["drivers"][k]["derived"]["k0"] = cfg["drivers"][k]["k0"]
             cfg["drivers"][k]["derived"]["w0"] = cfg["drivers"][k]["w0"]
@@ -319,9 +273,7 @@ def get_solver_quantities(cfg: Dict) -> Dict:
     one_over_kyr[1:] = 1.0 / cfg_grid["kyr"][1:]
     cfg_grid["one_over_kyr"] = np.array(one_over_kyr)
 
-    one_over_ksq = np.array(
-        1.0 / (cfg_grid["kx"][:, None] ** 2.0 + cfg_grid["ky"][None, :] ** 2.0)
-    )
+    one_over_ksq = np.array(1.0 / (cfg_grid["kx"][:, None] ** 2.0 + cfg_grid["ky"][None, :] ** 2.0))
     one_over_ksq[0, 0] = 0.0
     cfg_grid["one_over_ksq"] = np.array(one_over_ksq)
 
@@ -344,9 +296,7 @@ def get_solver_quantities(cfg: Dict) -> Dict:
         envelope_y = np.ones((cfg_grid["nx"], cfg_grid["ny"]))
 
     cfg_grid["absorbing_boundaries"] = np.exp(
-        -float(cfg_grid["boundary_abs_coeff"])
-        * cfg_grid["dt"]
-        * (1.0 - envelope_x * envelope_y)
+        -float(cfg_grid["boundary_abs_coeff"]) * cfg_grid["dt"] * (1.0 - envelope_x * envelope_y)
     )
 
     cfg_grid["zero_mask"] = (
@@ -389,9 +339,7 @@ def get_density_profile(cfg: Dict) -> Array:
 
         nprof = (
             cfg["density"]["min"]
-            + (cfg["density"]["max"] - cfg["density"]["min"])
-            * cfg["grid"]["x"]
-            / cfg["grid"]["xmax"]
+            + (cfg["density"]["max"] - cfg["density"]["min"]) * cfg["grid"]["x"] / cfg["grid"]["xmax"]
         )
         # nprof = mask * nprof[:, None]
         nprof = np.repeat(nprof[:, None], cfg["grid"]["ny"], axis=-1)
@@ -402,13 +350,8 @@ def get_density_profile(cfg: Dict) -> Array:
         rise = cfg["density"]["rise"]
         mask = get_envelope(rise, rise, left, right, cfg["grid"]["x"])
 
-        L = (
-            _Q(cfg["density"]["gradient scale length"]).to("nm").value
-            / cfg["units"]["derived"]["x0"].to("nm").value
-        )
-        nprof = cfg["density"]["val at center"] * np.exp(
-            (cfg["grid"]["x"] - cfg["density"]["center"]) / L
-        )
+        L = _Q(cfg["density"]["gradient scale length"]).to("nm").value / cfg["units"]["derived"]["x0"].to("nm").value
+        nprof = cfg["density"]["val at center"] * np.exp((cfg["grid"]["x"] - cfg["density"]["center"]) / L)
         nprof = mask * nprof
 
     elif cfg["density"]["basis"] == "tanh":
@@ -554,9 +497,7 @@ def post_process(result, cfg: Dict, td: str) -> Tuple[xr.Dataset, xr.Dataset]:
 
     os.makedirs(os.path.join(td, "binary"))
 
-    kfields, fields = make_field_xarrays(
-        cfg, result.ts["fields"], result.ys["fields"], td
-    )
+    kfields, fields = make_field_xarrays(cfg, result.ts["fields"], result.ys["fields"], td)
     series = make_series_xarrays(cfg, result.ts["default"], result.ys["default"], td)
 
     os.makedirs(os.path.join(td, "plots"))
@@ -580,9 +521,7 @@ def plot_series(series, td):
 def make_series_xarrays(cfg, this_t, state, td):
     esq = state["e_sq"]
     series_xr = xr.Dataset({"e_sq": xr.DataArray(esq, coords=(("t (ps)", this_t),))})
-    series_xr.to_netcdf(
-        os.path.join(td, "binary", "series.xr"), engine="h5netcdf", invalid_netcdf=True
-    )
+    series_xr.to_netcdf(os.path.join(td, "binary", "series.xr"), engine="h5netcdf", invalid_netcdf=True)
     return series_xr
 
 
@@ -605,16 +544,8 @@ def make_field_xarrays(cfg, this_t, state, td):
         nx = cfg["grid"]["nx"]
         ny = cfg["grid"]["ny"]
 
-    shift_kx = (
-        np.fft.fftshift(kx)
-        * cfg["units"]["derived"]["c"]
-        / cfg["units"]["derived"]["w0"]
-    )
-    shift_ky = (
-        np.fft.fftshift(ky)
-        * cfg["units"]["derived"]["c"]
-        / cfg["units"]["derived"]["w0"]
-    )
+    shift_kx = np.fft.fftshift(kx) * cfg["units"]["derived"]["c"] / cfg["units"]["derived"]["w0"]
+    shift_ky = np.fft.fftshift(ky) * cfg["units"]["derived"]["c"] / cfg["units"]["derived"]["w0"]
 
     tax_tuple = ("t (ps)", this_t)
     xax_tuple = ("x (um)", xax)
@@ -667,9 +598,7 @@ def make_field_xarrays(cfg, this_t, state, td):
         coords=(tax_tuple, xax_tuple, yax_tuple),
     )
 
-    background_density = xr.DataArray(
-        state["background_density"], coords=(tax_tuple, xax_tuple, yax_tuple)
-    )
+    background_density = xr.DataArray(state["background_density"], coords=(tax_tuple, xax_tuple, yax_tuple))
 
     # delta = xr.DataArray(state["delta"], coords=(tax_tuple, xax_tuple, yax_tuple))
 
@@ -689,9 +618,7 @@ def make_field_xarrays(cfg, this_t, state, td):
         engine="h5netcdf",
         invalid_netcdf=True,
     )
-    fields.to_netcdf(
-        os.path.join(td, "binary", "fields.xr"), engine="h5netcdf", invalid_netcdf=True
-    )
+    fields.to_netcdf(os.path.join(td, "binary", "fields.xr"), engine="h5netcdf", invalid_netcdf=True)
 
     return kfields, fields
 
@@ -705,18 +632,9 @@ def get_save_quantities(cfg: Dict) -> Dict:
     """
 
     # cfg["save"]["func"] = {**cfg["save"]["func"], **{"callable": get_save_func(cfg)}}
-    tmin = (
-        _Q(cfg["save"]["fields"]["t"]["tmin"]).to("s").value
-        / cfg["units"]["derived"]["timeScale"]
-    )
-    tmax = (
-        _Q(cfg["save"]["fields"]["t"]["tmax"]).to("s").value
-        / cfg["units"]["derived"]["timeScale"]
-    )
-    dt = (
-        _Q(cfg["save"]["fields"]["t"]["dt"]).to("s").value
-        / cfg["units"]["derived"]["timeScale"]
-    )
+    tmin = _Q(cfg["save"]["fields"]["t"]["tmin"]).to("s").value / cfg["units"]["derived"]["timeScale"]
+    tmax = _Q(cfg["save"]["fields"]["t"]["tmax"]).to("s").value / cfg["units"]["derived"]["timeScale"]
+    dt = _Q(cfg["save"]["fields"]["t"]["dt"]).to("s").value / cfg["units"]["derived"]["timeScale"]
     nt = int((tmax - tmin) / dt) + 1
 
     cfg["save"]["fields"]["t"]["dt"] = dt
@@ -725,31 +643,19 @@ def get_save_quantities(cfg: Dict) -> Dict:
     if "x" in cfg["save"]["fields"]:
         xmin = cfg["grid"]["xmin"]
         xmax = cfg["grid"]["xmax"]
-        dx = (
-            _Q(cfg["save"]["fields"]["x"]["dx"]).to("m").value
-            / cfg["units"]["derived"]["spatialScale"]
-            * 100
-        )
+        dx = _Q(cfg["save"]["fields"]["x"]["dx"]).to("m").value / cfg["units"]["derived"]["spatialScale"] * 100
         nx = int((xmax - xmin) / dx)
         cfg["save"]["fields"]["x"]["dx"] = dx
-        cfg["save"]["fields"]["x"]["ax"] = jnp.linspace(
-            xmin + dx / 2.0, xmax - dx / 2.0, nx
-        )
+        cfg["save"]["fields"]["x"]["ax"] = jnp.linspace(xmin + dx / 2.0, xmax - dx / 2.0, nx)
         cfg["save"]["fields"]["kx"] = np.fft.fftfreq(nx, d=dx / 2.0 / np.pi)
 
         if "y" in cfg["save"]["fields"]:
             ymin = cfg["grid"]["ymin"]
             ymax = cfg["grid"]["ymax"]
-            dy = (
-                _Q(cfg["save"]["fields"]["y"]["dy"]).to("m").value
-                / cfg["units"]["derived"]["spatialScale"]
-                * 100
-            )
+            dy = _Q(cfg["save"]["fields"]["y"]["dy"]).to("m").value / cfg["units"]["derived"]["spatialScale"] * 100
             ny = int((ymax - ymin) / dy)
             cfg["save"]["fields"]["y"]["dy"] = dy
-            cfg["save"]["fields"]["y"]["ax"] = jnp.linspace(
-                ymin + dy / 2.0, ymax - dy / 2.0, ny
-            )
+            cfg["save"]["fields"]["y"]["ax"] = jnp.linspace(ymin + dy / 2.0, ymax - dy / 2.0, ny)
             cfg["save"]["fields"]["ky"] = np.fft.fftfreq(ny, d=dy / 2.0 / np.pi)
         else:
             raise NotImplementedError("Must specify y in save")
@@ -787,9 +693,7 @@ def get_save_quantities(cfg: Dict) -> Dict:
                     ).view(jnp.float64)
                 elif k == "epw":
                     cmplx_fld = v.view(jnp.complex128)
-                    save_y[k] = jnp.reshape(
-                        interpolator(f=cmplx_fld), (nx, ny), order="F"
-                    ).view(jnp.float64)
+                    save_y[k] = jnp.reshape(interpolator(f=cmplx_fld), (nx, ny), order="F").view(jnp.float64)
                 else:
                     save_y[k] = jnp.reshape(interpolator(f=v), (nx, ny), order="F")
 

@@ -43,9 +43,7 @@ class SplitStep:
                 new_y[k] = y[k].view(jnp.float64)
         return new_y
 
-    def _pack_y_(
-        self, y: Dict[str, Array], new_y: Dict[str, Array]
-    ) -> tuple[Dict[str, Array], Dict[str, Array]]:
+    def _pack_y_(self, y: Dict[str, Array], new_y: Dict[str, Array]) -> tuple[Dict[str, Array], Dict[str, Array]]:
         for k in y.keys():
             y[k] = y[k].view(jnp.float64)
             new_y[k] = new_y[k].view(jnp.float64)
@@ -87,9 +85,7 @@ class SplitStep:
         )
 
         return jnp.fft.ifft2(
-            jnp.fft.fft2(epw)
-            * jnp.exp(-(gammaLandauEpw + self.nu_coll) * self.dt)
-            * self.low_pass_filter
+            jnp.fft.fft2(epw) * jnp.exp(-(gammaLandauEpw + self.nu_coll) * self.dt) * self.low_pass_filter
         )
 
     def __call__(self, t, y, args):

@@ -27,9 +27,7 @@ class VF(eqx.Module):
         self.cfg = cfg
         self.pusher_dict = {"ion": {}, "electron": {}}
         for species_name in ["ion", "electron"]:
-            self.pusher_dict[species_name]["push_n"] = pushers.DensityStepper(
-                cfg["grid"]["kx"]
-            )
+            self.pusher_dict[species_name]["push_n"] = pushers.DensityStepper(cfg["grid"]["kx"])
             self.pusher_dict[species_name]["push_u"] = pushers.VelocityStepper(
                 cfg["grid"]["kx"],
                 cfg["grid"]["kxr"],
@@ -40,9 +38,7 @@ class VF(eqx.Module):
                 cfg["grid"]["kx"], cfg["physics"][species_name]
             )
             if cfg["physics"][species_name]["trapping"]["is_on"]:
-                self.pusher_dict[species_name]["particle_trapper"] = (
-                    pushers.ParticleTrapper(cfg, species_name)
-                )
+                self.pusher_dict[species_name]["particle_trapper"] = pushers.ParticleTrapper(cfg, species_name)
 
         self.push_driver = pushers.Driver(cfg["grid"]["x"])
         # if "ey" in self.cfg["drivers"]:
@@ -84,30 +80,21 @@ class VF(eqx.Module):
             p = y[species_name]["p"]
             delta = y[species_name]["delta"]
             if self.cfg["physics"][species_name]["is_on"]:
-                q_over_m = (
-                    self.cfg["physics"][species_name]["charge"]
-                    / self.cfg["physics"][species_name]["mass"]
-                )
+                q_over_m = self.cfg["physics"][species_name]["charge"] / self.cfg["physics"][species_name]["mass"]
                 p_over_m = p / self.cfg["physics"][species_name]["mass"]
 
-                dstate_dt[species_name]["n"] = self.pusher_dict[species_name]["push_n"](
-                    n, u
-                )
+                dstate_dt[species_name]["n"] = self.pusher_dict[species_name]["push_n"](n, u)
                 dstate_dt[species_name]["u"] = self.pusher_dict[species_name]["push_u"](
                     n, u, p_over_m, q_over_m * total_e, delta
                 )
-                dstate_dt[species_name]["p"] = self.pusher_dict[species_name]["push_e"](
-                    n, u, p_over_m, q_over_m * e
-                )
+                dstate_dt[species_name]["p"] = self.pusher_dict[species_name]["push_e"](n, u, p_over_m, q_over_m * e)
             else:
                 dstate_dt[species_name]["n"] = jnp.zeros(self.cfg["grid"]["nx"])
                 dstate_dt[species_name]["u"] = jnp.zeros(self.cfg["grid"]["nx"])
                 dstate_dt[species_name]["p"] = jnp.zeros(self.cfg["grid"]["nx"])
 
             if self.cfg["physics"][species_name]["trapping"]["is_on"]:
-                dstate_dt[species_name]["delta"] = self.pusher_dict[species_name][
-                    "particle_trapper"
-                ](e, delta, args)
+                dstate_dt[species_name]["delta"] = self.pusher_dict[species_name]["particle_trapper"](e, delta, args)
             else:
                 dstate_dt[species_name]["delta"] = jnp.zeros(self.cfg["grid"]["nx"])
 

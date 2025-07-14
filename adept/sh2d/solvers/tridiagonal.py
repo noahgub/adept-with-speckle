@@ -60,9 +60,7 @@ class TridiagonalSolver(eqx.Module):
         :return:
         """
 
-        diags_stacked = jnp.stack(
-            [arr.transpose((1, 0)) for arr in (a, b, c, d)], axis=1
-        )
+        diags_stacked = jnp.stack([arr.transpose((1, 0)) for arr in (a, b, c, d)], axis=1)
         _, primes = scan(
             self.compute_primes,
             jnp.zeros((2, *a.shape[:-1])),

@@ -127,10 +127,7 @@ def _initialize_total_distribution_(cfg, cfg_grid):
                     _Q(species_params["gradient scale length"]).to("nm").magnitude
                     / cfg["units"]["derived"]["x0"].to("nm").magnitude
                 )
-                nprof = (
-                    species_params["val at center"]
-                    + (cfg_grid["x"] - species_params["center"]) / L
-                )
+                nprof = species_params["val at center"] + (cfg_grid["x"] - species_params["center"]) / L
                 nprof = mask * nprof
             elif species_params["basis"] == "exponential":
                 left = species_params["center"] - species_params["width"] * 0.5
@@ -145,9 +142,7 @@ def _initialize_total_distribution_(cfg, cfg_grid):
                     _Q(species_params["gradient scale length"]).to("nm").magnitude
                     / cfg["units"]["derived"]["x0"].to("nm").magnitude
                 )
-                nprof = species_params["val at center"] * np.exp(
-                    (cfg_grid["x"] - species_params["center"]) / L
-                )
+                nprof = species_params["val at center"] * np.exp((cfg_grid["x"] - species_params["center"]) / L)
                 nprof = mask * nprof
 
             elif species_params["basis"] == "tanh":
@@ -158,9 +153,7 @@ def _initialize_total_distribution_(cfg, cfg_grid):
 
                 if species_params["bump_or_trough"] == "trough":
                     nprof = 1 - nprof
-                nprof = (
-                    species_params["baseline"] + species_params["bump_height"] * nprof
-                )
+                nprof = species_params["baseline"] + species_params["bump_height"] * nprof
 
             elif species_params["basis"] == "sine":
                 baseline = species_params["baseline"]
@@ -228,9 +221,7 @@ def post_process(result: Solution, cfg: Dict, td: str, args: Dict):
 
                 np.log10(np.abs(fld)).plot()
                 plt.savefig(
-                    os.path.join(
-                        td, "plots", "fields", "logplots", f"spacetime-log-{nm[7:]}.png"
-                    ),
+                    os.path.join(td, "plots", "fields", "logplots", f"spacetime-log-{nm[7:]}.png"),
                     bbox_inches="tight",
                 )
                 plt.close()
@@ -244,10 +235,7 @@ def post_process(result: Solution, cfg: Dict, td: str, args: Dict):
 
         elif k.startswith("default"):
             scalars_xr = xarray.Dataset(
-                {
-                    k: xarray.DataArray(v, coords=(("t", result.ts["default"]),))
-                    for k, v in result.ys["default"].items()
-                }
+                {k: xarray.DataArray(v, coords=(("t", result.ts["default"]),)) for k, v in result.ys["default"].items()}
             )
             scalars_xr.to_netcdf(
                 os.path.join(

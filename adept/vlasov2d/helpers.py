@@ -15,9 +15,7 @@ from equinox import filter_jit
 from adept.vlasov2d.pushers import time as time_integrator
 from adept.vlasov2d.storage import store_f, store_fields, get_save_quantities
 
-gamma_da = xarray.open_dataarray(
-    os.path.join(os.path.dirname(__file__), "gamma_func_for_sg.nc")
-)
+gamma_da = xarray.open_dataarray(os.path.join(os.path.dirname(__file__), "gamma_func_for_sg.nc"))
 m_ax = gamma_da.coords["m"].data
 g_3_m = np.squeeze(gamma_da.loc[{"gamma": "3/m"}].data)
 g_5_m = np.squeeze(gamma_da.loc[{"gamma": "5/m"}].data)
@@ -119,9 +117,7 @@ def _initialize_distribution_(
     # noise_generator = np.random.default_rng(seed=noise_seed)
 
     dvs = [2.0 * vmax / nv for nv in nvs]
-    vaxs = [
-        np.linspace(-vmax + dv / 2.0, vmax - dv / 2.0, nv) for dv, nv in zip(dvs, nvs)
-    ]
+    vaxs = [np.linspace(-vmax + dv / 2.0, vmax - dv / 2.0, nv) for dv, nv in zip(dvs, nvs)]
 
     alpha = np.sqrt(3.0 * gamma_3_over_m(m) / gamma_5_over_m(m))
     # cst = m / (4 * np.pi * alpha**3.0 * gamma(3.0 / m))
@@ -137,10 +133,7 @@ def _initialize_distribution_(
     # for ix in range(nx):
     f = np.repeat(np.repeat(single_dist, nxs[0], axis=0), nxs[1], axis=1)
     # normalize
-    f = (
-        f
-        / np.trapz(np.trapz(f, dx=dvs[0], axis=2), dx=dvs[1], axis=2)[:, :, None, None]
-    )
+    f = f / np.trapz(np.trapz(f, dx=dvs[0], axis=2), dx=dvs[1], axis=2)[:, :, None, None]
 
     if n_prof.size > 1:
         # scale by density profile
@@ -323,9 +316,7 @@ def get_solver_quantities(cfg: Dict) -> Dict:
     # get_profile_with_mask(cfg["nu"]["time-profile"], t, cfg["nu"]["time-profile"]["bump_or_trough"])
     cfg_grid["ktprof"] = 1.0
     # get_profile_with_mask(cfg["krook"]["time-profile"], t, cfg["krook"]["time-profile"]["bump_or_trough"])
-    cfg_grid["n_prof_total"], cfg_grid["starting_f"] = _initialize_total_distribution_(
-        cfg, cfg_grid
-    )
+    cfg_grid["n_prof_total"], cfg_grid["starting_f"] = _initialize_total_distribution_(cfg, cfg_grid)
 
     cfg_grid["kprof"] = np.ones_like(cfg_grid["n_prof_total"])
     # get_profile_with_mask(cfg["krook"]["space-profile"], xs, cfg["krook"]["space-profile"]["bump_or_trough"])
@@ -395,12 +386,7 @@ def get_diffeqsolve_quants(cfg):
     return dict(
         terms=ODETerm(VectorField),
         solver=time_integrator.Stepper(),
-        saveat=dict(
-            subs={
-                k: SubSaveAt(ts=v["t"]["ax"], fn=v["func"])
-                for k, v in cfg["save"].items()
-            }
-        ),
+        saveat=dict(subs={k: SubSaveAt(ts=v["t"]["ax"], fn=v["func"]) for k, v in cfg["save"].items()}),
     )
 
 
@@ -424,9 +410,7 @@ def post_process(result, cfg: Dict, td: str):
             tslice = slice(0, -1, t_skip)
 
             for nm, fld in fields_xr.items():
-                fld[tslice].T.plot(
-                    col="t", col_wrap=4
-                )  # ax=ax[this_ax_row, this_ax_col])
+                fld[tslice].T.plot(col="t", col_wrap=4)  # ax=ax[this_ax_row, this_ax_col])
                 plt.savefig(
                     os.path.join(td, "plots", "fields", f"{nm[7:]}.png"),
                     bbox_inches="tight",
@@ -435,10 +419,7 @@ def post_process(result, cfg: Dict, td: str):
                 plt.close()
         elif k.startswith("default"):
             scalars_xr = xarray.Dataset(
-                {
-                    k: xarray.DataArray(v, coords=(("t", result.ts["default"]),))
-                    for k, v in result.ys["default"].items()
-                }
+                {k: xarray.DataArray(v, coords=(("t", result.ts["default"]),)) for k, v in result.ys["default"].items()}
             )
             scalars_xr.to_netcdf(
                 os.path.join(

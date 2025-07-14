@@ -11,9 +11,7 @@ def log_params(cfg):
     flattened_dict = dict(flatdict.FlatDict(cfg, delimiter="."))
     num_entries = len(flattened_dict.keys())
 
-    flattened_dict = {
-        k: str(v) if isinstance(v, Quantity) else v for k, v in flattened_dict.items()
-    }
+    flattened_dict = {k: str(v) if isinstance(v, Quantity) else v for k, v in flattened_dict.items()}
 
     if num_entries > 100:
         num_batches = num_entries % 100
@@ -93,9 +91,7 @@ def get_this_metric_of_this_run(metric_name, run_id):
 
 
 def download_and_open_file_from_this_run(fname, run_id, destination_path):
-    mlflow.artifacts.download_artifacts(
-        run_id=run_id, artifact_path=fname, dst_path=destination_path
-    )
+    mlflow.artifacts.download_artifacts(run_id=run_id, artifact_path=fname, dst_path=destination_path)
     with open(os.path.join(destination_path, fname), "rb") as f:
         this_file = pickle.load(f)
 
@@ -120,17 +116,11 @@ def all_reduce_gradients(gradients, num):
             else:
                 return a1 / num
 
-        summed_gradients = jax.tree_map(
-            _safe_add, gradients[0], gradients[1], is_leaf=_is_none
-        )
+        summed_gradients = jax.tree_map(_safe_add, gradients[0], gradients[1], is_leaf=_is_none)
         for i in range(2, num):
-            summed_gradients = jax.tree_map(
-                _safe_add, summed_gradients, gradients[i], is_leaf=_is_none
-            )
+            summed_gradients = jax.tree_map(_safe_add, summed_gradients, gradients[i], is_leaf=_is_none)
 
-        average_gradient = jax.tree_map(
-            _safe_divide, summed_gradients, is_leaf=_is_none
-        )
+        average_gradient = jax.tree_map(_safe_divide, summed_gradients, is_leaf=_is_none)
     else:
         average_gradient = gradients[0]
 
@@ -177,9 +167,7 @@ def upload_dir_to_s3(
     else:
         fname = f"{prefix}-{run_id}-{step}.txt"
 
-    client.upload_file(
-        os.path.join(local_directory, f"ingest-{run_id}.txt"), bucket, fname
-    )
+    client.upload_file(os.path.join(local_directory, f"ingest-{run_id}.txt"), bucket, fname)
 
 
 def robust_log_artifacts(directory, retries=5, delay=5):
