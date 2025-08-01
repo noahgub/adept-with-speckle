@@ -15,8 +15,8 @@ drivers:
       energy: 1.                               
       focal_length: 1.675                         
       beam_aperture: [0.25, 0.25] 
-      n_beamlets_x: 64
-      n_beamlets_y: 64         
+      n_beamlets_x: 256
+      n_beamlets_y: 256     
       relative_laser_bandwidth: 0.005
       ssd_phase_modulation_amplitude: [4.,4.]
       ssd_number_color_cycles: [1.35,1.35] 
@@ -37,30 +37,6 @@ drivers:
       # bounded_param = a + b * jnp.tanh(unbounded_param)
       # Lower Bound: a - b
       # Upper Bound: a + b
-      wavelength:
-        a: 351.0e-9
-        b: 100.0e-9
-        learned: false
-      energy:
-        a: 1.0
-        b: 1.0
-        learned: false
-      focal_length:
-        a: 10.0
-        b: 9.5
-        learned: false
-      beam_aperture:
-        a: 0.5
-        b: 0.45
-        learned: false
-      n_beamlets_x:
-        a: 200.0
-        b: 150.0
-        learned: false
-      n_beamlets_y:
-        a: 200.0
-        b: 150.0
-        learned: false
       relative_laser_bandwidth:
         a: 0.005
         b: 0.004
@@ -68,7 +44,7 @@ drivers:
       ssd_phase_modulation_amplitude: 
         a: 4.0
         b: 3.5
-        learned: false
+        learned: true
       ssd_number_color_cycles:
         a: 1.5
         b: 1.0
@@ -76,6 +52,10 @@ drivers:
       ssd_transverse_bandwidth_distribution:
         a: 2.0
         b: 1.5
+        learned: false
+      phase_plate:
+        a: 3.2
+        b: 3.2
         learned: false
       amplitudes: 
         init: random # uniform, random
@@ -92,7 +72,7 @@ grid:
   dt: 0.01ps
   dx: 30nm
   low_pass_filter: 0.66
-  tmax: 10.0ps
+  tmax: 8.0ps
   tmin: 0.0ns
   ymax: 4um
   ymin: -4um
@@ -102,13 +82,13 @@ parsl:
   nodes: 128
 
 mlflow:
-  experiment: ngub_opt_I=5e14
-  run: long_baseline
+  experiment: ngub_opt_testing
+  run: noclip_pamp_grad_test
 save:
   fields:
     t:
       dt: 0.2ps
-      tmax: 10.0ps
+      tmax: 8.0ps
       tmin: 0ps
     x:
       dx: 52nm
@@ -133,7 +113,7 @@ units:
   atomic number: 40
   envelope density: 0.25
   ionization state: 6
-  laser intensity: 5e+14W/cm^2
+  laser intensity: 4.0e+14W/cm^2
   laser_wavelength: 351nm
   reference electron temperature: 2000eV
   reference ion temperature: 1000eV
@@ -142,4 +122,4 @@ opt:
   batch_size: 1
   decay_steps: 100000
   method: optax
-  metric_time_in_ps: 5.0
+  metric_time_in_ps: 3.0

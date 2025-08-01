@@ -6,9 +6,12 @@ from jax.random import PRNGKey
 
 import equinox as eqx
 import numpy as np
-import mlflow
 
 from adept.utils import download_from_s3
+
+import sys
+import os
+sys.path.append(os.path.abspath("C:/Users/ngub/Documents/Projects/lasy"))
 
 from lasy.profiles.speckle_profile import SpeckleProfile
 
