@@ -1,22 +1,13 @@
 import argparse
 import os
-
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
-
-from jax import config, jit, value_and_grad
-import jax.numpy as jnp
-
+from jax import config
 config.update("jax_enable_x64", True)
 # config.update("jax_disable_jit", True)
 
 import yaml
 
 from adept import ergoExo
-import sys
-
-ml_for_lpi_path = "/global/homes/n/ngub/adept"
-sys.path.append(os.path.abspath(ml_for_lpi_path))
-from ml_for_lpi.ml4tpd import TPDModule
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
